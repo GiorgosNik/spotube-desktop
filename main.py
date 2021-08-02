@@ -1,4 +1,5 @@
 import spotipy
+from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 
 # Set the Spotify API Keys
@@ -19,9 +20,22 @@ for item in playlistToGet['tracks']['items']:
         if artistList != "":
             artistList += ", "
         artistList += (artist['name'])
-    # print(song['name'], artistList, song['album']['name'])
+    # print(song.keys())
+    # Format the song data
     year = song['album']['release_date'].replace("-", " ").split()[0]
     name = song['name']
     artist = artistList
     album = song['album']['name']
-    print(name, artist, album, year)
+    duration = int(song['duration_ms'])
+
+    # Search for the best candidate
+    minDifference = duration
+    videoSearch = VideosSearch(name + " " + artist, limit=5)
+    for searchItem in videoSearch.result()['result']:
+        durationStr = searchItem['duration'].replace(":", " ").split()
+        durationInt = int(durationStr[0]) * 60000 + int(durationStr[1]) * 1000
+        if abs(durationInt - duration) < minDifference:
+            duration = durationInt
+            link = searchItem['link']
+            
+    print(name, artist, album, year, link)
