@@ -3,6 +3,7 @@ from pydub import AudioSegment
 from youtube_dl import YoutubeDL
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
+import eyed3
 
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
@@ -55,4 +56,9 @@ for item in playlistToGet['tracks']['items']:
         print("Couldn\'t download the audio")
     webm_audio = AudioSegment.from_file(filename, format="webm")
     webm_audio.export(name+".mp3", format="mp3")
+    tag = eyed3.load(name+".mp3")
 
+    file = eyed3.load("test.mp3")
+    file.initTag()
+    
+    file.update()
