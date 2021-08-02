@@ -1,9 +1,12 @@
 import spotipy
 from pydub import AudioSegment
 from youtube_dl import YoutubeDL
+import os
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 import eyed3
+import requests
+import shutil
 
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
@@ -21,7 +24,7 @@ sp = spotipy.Spotify(auth_manager=auth_manager)
 playlistToGet = sp.playlist('https://open.spotify.com/playlist/2tUdm8UGbwNQzxOtF2pHiu?si=3e63f30913d24542')
 for item in playlistToGet['tracks']['items']:
     song = item['track']
-    # print(song['album']['images'][0])
+    cover_art = song['album']['images'][0]['url']
     artistList = ""
     for artist in song['artists']:
         if artistList != "":
@@ -54,11 +57,31 @@ for item in playlistToGet['tracks']['items']:
         filename=text['title']+"-"+text["id"]+".webm"
     except Exception:
         print("Couldn\'t download the audio")
+    filename=filename.replace('"', "'")
+    print(filename)
     webm_audio = AudioSegment.from_file(filename, format="webm")
     webm_audio.export(name+".mp3", format="mp3")
-    tag = eyed3.load(name+".mp3")
 
-    file = eyed3.load("test.mp3")
-    file.initTag()
-    
-    file.update()
+    # Get the Cover Art
+    image_url = cover_art
+    filename = 'cover_photo.jpg'
+    r = requests.get(image_url, stream=True)
+    if r.status_code == 200:
+        r.raw.decode_content = True
+        with open(filename, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+        print('Image successfully Downloaded: ', filename)
+    else:
+        print('Image Couldn\'t be retrieved')
+
+    audiofile = eyed3.load(name+'.mp3')
+    if (audiofile.tag == None):
+        audiofile.initTag()
+
+    audiofile.tag.images.set(3, open('cover_photo.jpg', 'rb').read(), 'image/jpeg')
+    audiofile.tag.artist=artist
+    audiofile.tag.title=name
+    audiofile.tag.album=album
+    audiofile.tag.year=year
+    audiofile.tag.save()
+
