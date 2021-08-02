@@ -1,10 +1,16 @@
 import spotipy
+from pydub import AudioSegment
+from youtube_dl import YoutubeDL
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
 CLIENT_SECRET = '5539f7392ae94dd5b3dfc1d57381303a'
+
+# Set the downloader
+audio_downloader = YoutubeDL({'format':'bestaudio'})
+
 
 # Auth with the Spotify Framework
 auth_manager = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
@@ -39,3 +45,14 @@ for item in playlistToGet['tracks']['items']:
             link = searchItem['link']
             
     print(name, artist, album, year, link)
+
+    # Try to download the song
+    try:
+        URL = link
+        text=audio_downloader.extract_info(URL)
+        filename=text['title']+"-"+text["id"]+".webm"
+    except Exception:
+        print("Couldn\'t download the audio")
+    webm_audio = AudioSegment.from_file(filename, format="webm")
+    webm_audio.export(name+".mp3", format="mp3")
+
