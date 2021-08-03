@@ -2,16 +2,22 @@ import spotipy
 from pydub import AudioSegment
 from youtube_dl import YoutubeDL
 import os
+import glob
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 import eyed3
 import requests
 import shutil
+import lyricsgenius
 import random
+import time
 
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
 CLIENT_SECRET = '5539f7392ae94dd5b3dfc1d57381303a'
+
+# Set the Lyrics Genius API Keys
+genius = lyricsgenius.Genius('5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ')
 
 # Set the downloader
 audio_downloader = YoutubeDL({'format': 'bestaudio'})
@@ -28,7 +34,7 @@ else:
     os.mkdir('./Songs')
 
 # Get data for every song in the playlist
-playlistToGet = sp.playlist('https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=25d79d887fa44775')
+playlistToGet = sp.playlist('https://open.spotify.com/playlist/0OnKnbMfYmTgUqIVuqthoY?si=df2ae053bffe41ef')
 for item in playlistToGet['tracks']['items']:
     song = item['track']
     cover_art = song['album']['images'][0]['url']
@@ -44,7 +50,7 @@ for item in playlistToGet['tracks']['items']:
     artist = artistList
     album = song['album']['name']
     duration = int(song['duration_ms'])
-    print("Searching for Name: ",name)
+    print("Searching for Name: ", name)
     # Search for the best candidate
     minDifference = duration
     videoSearch = VideosSearch(name + " " + artist, limit=3)
@@ -63,11 +69,24 @@ for item in playlistToGet['tracks']['items']:
         filename = text['title'] + "-" + text["id"] + ".webm"
     except Exception:
         print("Couldn\'t download the audio")
-    filename = filename.replace('"', "'")
-    print(filename)
-    webm_audio = AudioSegment.from_file(filename, format="webm")
-    webm_audio.export(name + ".mp3", format="mp3")
-    os.remove(filename)
+    time.sleep(5)
+    list_of_files = glob.glob('./*.webm')  # * means all if need specific format then *.csv
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+    while True:
+        try:
+            os.rename(latest_file, "import.webm")
+            webm_audio = AudioSegment.from_file('import.webm', format="webm")
+            webm_audio.export(name + ".mp3", format="mp3")
+            os.remove('./import.webm')
+            break
+        except Exception:
+            os.rename(latest_file, "import.m4a")
+            webm_audio = AudioSegment.from_file('import.webm', format="m4a")
+            webm_audio.export(name + ".mp3", format="mp3")
+            os.remove('./import.m4a')
+            break
+
 
     # Get the Cover Art
     image_url = cover_art
@@ -91,6 +110,16 @@ for item in playlistToGet['tracks']['items']:
     audioFile.tag.title = name
     audioFile.tag.album = album
     audioFile.tag.year = year
-    audioFile.tag.save()
 
+    try:
+        geniusSong = genius.search_song(name, artist)
+        formatedLyrics = geniusSong.lyrics.rsplit(' ', 1)[0].replace("EmbedShare", '')
+        formatedLyrics = formatedLyrics.rsplit(' ', 1)[0] + ''.join(
+            [i for i in formatedLyrics.rsplit(' ', 1)[1] if not i.isdigit()])
+        print("Got Lyrics:")
+        print(formatedLyrics)
+        audioFile.tag.lyrics.set(formatedLyrics)
+    except Exception:
+        continue
+    audioFile.tag.save()
     shutil.move('./' + name + '.mp3', './Songs/' + name + '.mp3')
