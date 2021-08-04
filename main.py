@@ -3,6 +3,7 @@ from pydub import AudioSegment
 from youtube_dl import YoutubeDL
 import os
 import glob
+import re
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 import eyed3
@@ -34,7 +35,7 @@ else:
     os.mkdir('./Songs')
 
 # Get data for every song in the playlist
-playlistToGet = sp.playlist('https://open.spotify.com/playlist/0OnKnbMfYmTgUqIVuqthoY?si=df2ae053bffe41ef')
+playlistToGet = sp.playlist('https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c')
 for item in playlistToGet['tracks']['items']:
     song = item['track']
     cover_art = song['album']['images'][0]['url']
@@ -112,7 +113,13 @@ for item in playlistToGet['tracks']['items']:
     audioFile.tag.year = year
 
     try:
-        geniusSong = genius.search_song(name, artist)
+        nameSearch = re.sub("[\(\[].*?[\)\]]", "", name)
+        nameSearch = str(nameSearch)
+        sep1 = 'ft.'
+        sep2 = 'feat'
+        nameSearch = nameSearch.split(sep1, 1)[0]
+        nameSearch = nameSearch.split(sep2, 1)[0]
+        geniusSong = genius.search_song(nameSearch, artist)
         formatedLyrics = geniusSong.lyrics.rsplit(' ', 1)[0].replace("EmbedShare", '')
         formatedLyrics = formatedLyrics.rsplit(' ', 1)[0] + ''.join(
             [i for i in formatedLyrics.rsplit(' ', 1)[1] if not i.isdigit()])
