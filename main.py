@@ -11,15 +11,21 @@ import requests
 import shutil
 import lyricsgenius
 import random
+import tkinter
+import tkinter.filedialog
+import threading
 import time
 
 
+# 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+
 def create_folder():
-    if not os.path.isdir('./Songs'):
-        os.mkdir('./Songs')
+    global folder_path
+    if not os.path.isdir(folder_path + './Songs'):
+        os.mkdir(folder_path + './Songs')
     else:
-        os.rename('./Songs', './OldSongs' + str(random.randrange(100)))
-        os.mkdir('./Songs')
+        os.rename(folder_path + './Songs', folder_path + './OldSongs' + str(random.randrange(100)))
+        os.mkdir(folder_path + './Songs')
 
 
 def get_lyrics(nameSearch, artistSearch, genius_obj):
@@ -112,7 +118,10 @@ def get_youtube(given_link, song_info):
         print('Image Couldn\'t be retrieved')
 
 
-def download_playlist(playlist_url):
+def download_playlist(playlist_url, dir_to_save='./'):
+    # Set up the folder for the songs
+    create_folder()
+
     playlistToGet = sp.playlist(playlist_url)
     for item in playlistToGet['tracks']['items']:
         # Format the song data
@@ -137,8 +146,29 @@ def download_playlist(playlist_url):
         set_tags(songInfo, genius)
 
         # Move to the designated folder
-        shutil.move('./' + name + '.mp3', './Songs/' + name + '.mp3')
+        start_pos='./' + name + '.mp3'
+        end_pos=dir_to_save + 'Songs/' + name + '.mp3'
+        print(start_pos)
+        print(end_pos)
+        shutil.move('./' + name + '.mp3', dir_to_save + 'Songs/' + name + '.mp3')
 
+
+def browse_button():
+    global folder_path
+    filename = tkinter.filedialog.askdirectory()
+    print(filename)
+    folder_path = filename
+
+
+def on_click(url_entry):
+    global folder_path
+    given_url = url_entry.get()
+    process_thread = threading.Thread(target=download_playlist, args=(given_url, folder_path,))
+    process_thread.start()
+    # 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+
+
+folder_path = ''
 
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
@@ -154,11 +184,20 @@ audio_downloader = YoutubeDL({'format': 'bestaudio'})
 auth_manager = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
-# Set up the folder for the songs
-create_folder()
-
 # Get the playlist link
-given_url = 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+top = tkinter.Tk(className='Spotify Downloader')
+top.geometry("600x300")
 
-# Pass to the downloader function
-download_playlist(given_url)
+L1 = tkinter.Label(top, text="Link to Playlist")
+L1.pack(side='left', padx=5, pady=5)
+E1 = tkinter.Entry(top, bd=5, width=50)
+E1.pack(side='right', padx=5, pady=5)
+entryString = E1.get()
+
+v = tkinter.StringVar()
+button2 = tkinter.Button(top, text="Select folder", command=browse_button)
+button2.pack()
+w = tkinter.Button(top, text="Download", command=lambda: on_click(E1), padx=5, pady=5)
+w.pack()
+
+top.mainloop()
