@@ -56,6 +56,7 @@ def set_tags(song_info, genius_obj):
     except Exception:
         pass
     audio_file.tag.save()
+    os.remove('./cover_photo.jpg')
 
 
 def format_artists(artist_list):
@@ -73,8 +74,8 @@ def get_best_link(song_info):
     for searchItem in video_search.result()['result']:
         duration_str = searchItem['duration'].replace(":", " ").split()
         duration_int = int(duration_str[0]) * 60000 + int(duration_str[1]) * 1000
-        if abs(duration_int - duration) < min_difference:
-            min_difference = abs(duration_int - duration)
+        if abs(duration_int - song_info['duration']) < min_difference:
+            min_difference = abs(duration_int - song_info['duration'])
             best_link = searchItem['link']
     print(song_info['name'], song_info['artist'], song_info['album'], song_info['year'], best_link)
     return best_link
@@ -111,6 +112,34 @@ def get_youtube(given_link, song_info):
         print('Image Couldn\'t be retrieved')
 
 
+def download_playlist(playlist_url):
+    playlistToGet = sp.playlist(playlist_url)
+    for item in playlistToGet['tracks']['items']:
+        # Format the song data
+        song = item['track']
+        cover_art = song['album']['images'][0]['url']
+        year = song['album']['release_date'].replace("-", " ").split()[0]
+        name = song['name']
+        artist = format_artists(song['artists'])
+        album = song['album']['name']
+        duration = int(song['duration_ms'])
+        songInfo = {'name': name, 'artist': artist, 'album': album, 'year': year, 'duration': duration,
+                    'url': cover_art}
+        print("Searching for Name: ", name)
+
+        # Search for the best candidate
+        link = get_best_link(songInfo)
+
+        # Try to download the song
+        get_youtube(link, songInfo)
+
+        # Edit the ID3 Tags
+        set_tags(songInfo, genius)
+
+        # Move to the designated folder
+        shutil.move('./' + name + '.mp3', './Songs/' + name + '.mp3')
+
+
 # Set the Spotify API Keys
 CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
 CLIENT_SECRET = '5539f7392ae94dd5b3dfc1d57381303a'
@@ -128,28 +157,8 @@ sp = spotipy.Spotify(auth_manager=auth_manager)
 # Set up the folder for the songs
 create_folder()
 
-# Get data for every song in the playlist with link:
-playlistToGet = sp.playlist('https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c')
+# Get the playlist link
+given_url = 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
 
-for item in playlistToGet['tracks']['items']:
-    # Format the song data
-    song = item['track']
-    cover_art = song['album']['images'][0]['url']
-    year = song['album']['release_date'].replace("-", " ").split()[0]
-    name = song['name']
-    artist = format_artists(song['artists'])
-    album = song['album']['name']
-    duration = int(song['duration_ms'])
-    songInfo = {'name': name, 'artist': artist, 'album': album, 'year': year, 'duration': duration, 'url': cover_art}
-    print("Searching for Name: ", name)
-
-    # Search for the best candidate
-    link = get_best_link(songInfo)
-
-    # Try to download the song
-    get_youtube(link, songInfo)
-
-    # Edit the ID3 Tags
-    set_tags(songInfo, genius)
-
-    shutil.move('./' + name + '.mp3', './Songs/' + name + '.mp3')
+# Pass to the downloader function
+download_playlist(given_url)
