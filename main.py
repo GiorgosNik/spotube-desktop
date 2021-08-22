@@ -1,9 +1,7 @@
 import spotipy
-from pydub import AudioSegment
 from youtube_dl import YoutubeDL
 import os
 import glob
-import re
 from youtubesearchpython import VideosSearch
 from spotipy.oauth2 import SpotifyClientCredentials
 import eyed3
@@ -11,13 +9,14 @@ import requests
 import shutil
 import lyricsgenius
 import random
-import tkinter
 import tkinter.filedialog
 import threading
 import time
+from tkinter import ttk
 
 
-# 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+#   BIG 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+#   Small https://open.spotify.com/playlist/4Yp12s7QSNItjrY3kmiEhh?si=9e9aad3e7ee94346'
 
 def create_folder():
     global folder_path
@@ -92,19 +91,10 @@ def get_youtube(given_link, song_info):
         audio_downloader.extract_info(given_link)
     except Exception:
         print("Couldn\'t download the audio")
-    list_of_files = glob.glob('./*.webm')  # * means all if need specific format then *.csv
+    list_of_files = glob.glob('./*.mp3')  # * means all if need specific format then *.csv
     latest_file = max(list_of_files, key=os.path.getctime)
     print(latest_file)
-    try:
-        os.rename(latest_file, "import.webm")
-        webm_audio = AudioSegment.from_file('import.webm', format="webm")
-        webm_audio.export(song_info['name'] + ".mp3", format="mp3")
-        os.remove('./import.webm')
-    except Exception:
-        os.rename(latest_file, "import.m4a")
-        webm_audio = AudioSegment.from_file('import.webm', format="m4a")
-        webm_audio.export(song_info['name'] + ".mp3", format="mp3")
-        os.remove('./import.m4a')
+    os.rename(latest_file, song_info['name']+".mp3")
     # Get the Cover Art
     image_url = song_info['url']
     filename = 'cover_photo.jpg'
@@ -119,11 +109,15 @@ def get_youtube(given_link, song_info):
 
 
 def download_playlist(playlist_url, dir_to_save='./'):
+    if dir_to_save=='':
+        dir_to_save='.'
     # Set up the folder for the songs
     create_folder()
-
-    playlistToGet = sp.playlist(playlist_url)
-    for item in playlistToGet['tracks']['items']:
+    global progress
+    i = 0
+    playlist_to_get = sp.playlist(playlist_url)
+    for item in playlist_to_get['tracks']['items']:
+        time.sleep(1)
         # Format the song data
         song = item['track']
         cover_art = song['album']['images'][0]['url']
@@ -146,11 +140,13 @@ def download_playlist(playlist_url, dir_to_save='./'):
         set_tags(songInfo, genius)
 
         # Move to the designated folder
-        start_pos='./' + name + '.mp3'
-        end_pos=dir_to_save + 'Songs/' + name + '.mp3'
+        start_pos = './' + name + '.mp3'
+        end_pos = dir_to_save + '/Songs/' + name + '.mp3'
         print(start_pos)
         print(end_pos)
-        shutil.move('./' + name + '.mp3', dir_to_save + 'Songs/' + name + '.mp3')
+        shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
+        i += 100/len(playlist_to_get['tracks']['items']) * 3
+        progress = i / len(playlist_to_get['tracks']['items'])
 
 
 def browse_button():
@@ -162,42 +158,75 @@ def browse_button():
 
 def on_click(url_entry):
     global folder_path
+    global progress
     given_url = url_entry.get()
     process_thread = threading.Thread(target=download_playlist, args=(given_url, folder_path,))
     process_thread.start()
     # 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
 
 
+def auth_handler():
+    # Set the Lyrics Genius API Keys
+    genius_auth = lyricsgenius.Genius('5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ')
+
+    # Auth with the Spotify Framework
+    client_id = 'ff55dcadd44e4cb0819ebe5be80ab687'
+    client_secret = '5539f7392ae94dd5b3dfc1d57381303a'
+    auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+    spotify_auth = spotipy.Spotify(auth_manager=auth_manager)
+    return {'genius': genius_auth, 'spotify': spotify_auth}
+
+
+def set_progress():
+    global progress
+    progress_bar['value'] = progress
+    top.after(1000, set_progress)
+
+
 folder_path = ''
 
-# Set the Spotify API Keys
-CLIENT_ID = 'ff55dcadd44e4cb0819ebe5be80ab687'
-CLIENT_SECRET = '5539f7392ae94dd5b3dfc1d57381303a'
-
-# Set the Lyrics Genius API Keys
-genius = lyricsgenius.Genius('5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ')
-
 # Set the downloader
-audio_downloader = YoutubeDL({'format': 'bestaudio'})
+audio_downloader = YoutubeDL({'format': 'bestaudio','postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }]})
 
-# Auth with the Spotify Framework
-auth_manager = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
-sp = spotipy.Spotify(auth_manager=auth_manager)
+tokens = auth_handler()
+sp = tokens['spotify']
+genius = tokens['genius']
 
 # Get the playlist link
-top = tkinter.Tk(className='Spotify Downloader')
-top.geometry("600x300")
 
-L1 = tkinter.Label(top, text="Link to Playlist")
-L1.pack(side='left', padx=5, pady=5)
+
+top = tkinter.Tk(className='Spotify Downloader')
+top.geometry("400x150")
+top.columnconfigure(0, weight=2)
+top.columnconfigure(1, weight=3)
+top.columnconfigure(2, weight=3)
+top.columnconfigure(3, weight=3)
+
+playlist_label = tkinter.Label(top, text="Link to Playlist")
+playlist_label.grid(column=0, row=0, padx=5, pady=5, sticky=tkinter.W)
+
 E1 = tkinter.Entry(top, bd=5, width=50)
-E1.pack(side='right', padx=5, pady=5)
+E1.grid(column=1, row=0, padx=5, pady=5)
 entryString = E1.get()
 
+progress = 0
+
 v = tkinter.StringVar()
-button2 = tkinter.Button(top, text="Select folder", command=browse_button)
-button2.pack()
-w = tkinter.Button(top, text="Download", command=lambda: on_click(E1), padx=5, pady=5)
-w.pack()
+select_folder = tkinter.Button(top, text="Select folder", command=browse_button)
+select_folder.grid(column=1, row=1, padx=100, pady=5, sticky=tkinter.W)
+
+download_button = tkinter.Button(top, text="Download", command=lambda: on_click(E1))
+download_button.grid(column=1, row=1, padx=5, pady=5, sticky=tkinter.W)
+
+progress_label = tkinter.Label(top, text="Progress:")
+progress_label.grid(column=0, row=2, padx=5, pady=5, sticky=tkinter.W)
+
+progress_bar = ttk.Progressbar(top, orient='horizontal', length=300, mode='determinate')
+progress_bar.grid(column=1, row=2, padx=5, pady=5, sticky=tkinter.W)
+set_progress()
 
 top.mainloop()
