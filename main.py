@@ -106,12 +106,12 @@ def get_youtube(given_link, song_info):
                 print('Image successfully Downloaded: ', filename)
             else:
                 print('Image Couldn\'t be retrieved')
-            break
+            return 0
         except Exception:
             print("Couldn\'t download the audio,trying again...")
             attempts += 1
             continue
-
+        raise Exception("Could not Download")
 
 
 def download_playlist(playlist_url, dir_to_save='./'):
@@ -140,19 +140,22 @@ def download_playlist(playlist_url, dir_to_save='./'):
         link = get_best_link(songInfo)
 
         # Try to download the song
-        get_youtube(link, songInfo)
+        try:
+            get_youtube(link, songInfo)
+            # Edit the ID3 Tags
+            set_tags(songInfo, genius)
 
-        # Edit the ID3 Tags
-        set_tags(songInfo, genius)
+            # Move to the designated folder
+            start_pos = './' + name + '.mp3'
+            end_pos = dir_to_save + '/Songs/' + name + '.mp3'
+            print(start_pos)
+            print(end_pos)
+            shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
+            i += 1
+            progress = i / len(playlist_to_get['tracks']['items'])*100
+        except Exception:
+            continue
 
-        # Move to the designated folder
-        start_pos = './' + name + '.mp3'
-        end_pos = dir_to_save + '/Songs/' + name + '.mp3'
-        print(start_pos)
-        print(end_pos)
-        shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
-        i += 1
-        progress = i / len(playlist_to_get['tracks']['items'])*100
 
 
 def browse_button():
