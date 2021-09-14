@@ -206,7 +206,10 @@ genius = tokens['genius']
 
 
 top = tkinter.Tk(className='Spotify Downloader')
-top.geometry("400x150")
+top.call("source", "forest-dark.tcl")
+ttk.Style().theme_use('forest-dark')
+
+top.geometry("470x150")
 top.columnconfigure(0, weight=2)
 top.columnconfigure(1, weight=3)
 top.columnconfigure(2, weight=3)
@@ -215,20 +218,20 @@ top.columnconfigure(3, weight=3)
 playlist_label = tkinter.Label(top, text="Link to Playlist")
 playlist_label.grid(column=0, row=0, padx=5, pady=5, sticky=tkinter.W)
 
-E1 = tkinter.Entry(top, bd=5, width=50)
+E1 = ttk.Entry(top, width=50)
 E1.grid(column=1, row=0, padx=5, pady=5)
 entryString = E1.get()
 
 progress = 0
 
 v = tkinter.StringVar()
-select_folder = tkinter.Button(top, text="Select folder", command=browse_button)
+select_folder = ttk.Button(top, text="Select folder", style='Accent.TButton', command=browse_button)
 select_folder.grid(column=1, row=1, padx=100, pady=5, sticky=tkinter.W)
 
-download_button = tkinter.Button(top, text="Download", command=lambda: on_click(E1))
+download_button = ttk.Button(top, text="Download", style='Accent.TButton', command=lambda: on_click(E1))
 download_button.grid(column=1, row=1, padx=5, pady=5, sticky=tkinter.W)
 
-progress_label = tkinter.Label(top, text="Progress:")
+progress_label = ttk.Label(top, text="Progress:")
 progress_label.grid(column=0, row=2, padx=5, pady=5, sticky=tkinter.W)
 
 progress_bar = ttk.Progressbar(top, orient='horizontal', length=300, mode='determinate')
