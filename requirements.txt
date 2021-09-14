@@ -1,0 +1,7 @@
+pydub==0.25.1
+requests==2.26.0
+youtube_search_python==1.4.6
+spotipy==2.18.0
+youtube_dl==2021.6.6
+lyricsgenius==3.0.1
+eyed3==0.9.6
