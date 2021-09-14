@@ -87,25 +87,31 @@ def get_best_link(song_info):
 
 
 def get_youtube(given_link, song_info):
-    try:
-        audio_downloader.extract_info(given_link)
-    except Exception:
-        print("Couldn\'t download the audio")
-    list_of_files = glob.glob('./*.mp3')  # * means all if need specific format then *.csv
-    latest_file = max(list_of_files, key=os.path.getctime)
-    print(latest_file)
-    os.rename(latest_file, song_info['name']+".mp3")
-    # Get the Cover Art
-    image_url = song_info['url']
-    filename = 'cover_photo.jpg'
-    r = requests.get(image_url, stream=True)
-    if r.status_code == 200:
-        r.raw.decode_content = True
-        with open(filename, 'wb') as f:
-            shutil.copyfileobj(r.raw, f)
-        print('Image successfully Downloaded: ', filename)
-    else:
-        print('Image Couldn\'t be retrieved')
+    attempts = 0
+    while attempts <= 5:
+        try:
+            audio_downloader.extract_info(given_link)
+            list_of_files = glob.glob('./*.mp3')  # * means all if need specific format then *.csv
+            latest_file = max(list_of_files, key=os.path.getctime)
+            print(latest_file)
+            os.rename(latest_file, song_info['name'] + ".mp3")
+            # Get the Cover Art
+            image_url = song_info['url']
+            filename = 'cover_photo.jpg'
+            r = requests.get(image_url, stream=True)
+            if r.status_code == 200:
+                r.raw.decode_content = True
+                with open(filename, 'wb') as f:
+                    shutil.copyfileobj(r.raw, f)
+                print('Image successfully Downloaded: ', filename)
+            else:
+                print('Image Couldn\'t be retrieved')
+            break
+        except Exception:
+            print("Couldn\'t download the audio,trying again...")
+            attempts += 1
+            continue
+
 
 
 def download_playlist(playlist_url, dir_to_save='./'):
@@ -145,8 +151,8 @@ def download_playlist(playlist_url, dir_to_save='./'):
         print(start_pos)
         print(end_pos)
         shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
-        i += 100/len(playlist_to_get['tracks']['items']) * 3
-        progress = i / len(playlist_to_get['tracks']['items'])
+        i += 1
+        progress = i / len(playlist_to_get['tracks']['items'])*100
 
 
 def browse_button():
@@ -180,7 +186,7 @@ def auth_handler():
 def set_progress():
     global progress
     progress_bar['value'] = progress
-    top.after(1000, set_progress)
+    top.after(600, set_progress)
 
 
 folder_path = ''
