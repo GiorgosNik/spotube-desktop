@@ -155,7 +155,8 @@ def download_playlist(playlist_url, dir_to_save='./'):
             progress = i / len(playlist_to_get['tracks']['items'])*100
         except Exception:
             continue
-
+    i += 1
+    progress = i / len(playlist_to_get['tracks']['items']) * 100
 
 
 def browse_button():
