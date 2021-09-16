@@ -14,6 +14,8 @@ import threading
 import time
 from tkinter import ttk
 from zipfile import ZipFile
+from tkinter import *
+from ctypes import windll
 
 
 #   BIG 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
@@ -116,8 +118,8 @@ def get_youtube(given_link, song_info):
 
 
 def download_playlist(playlist_url, dir_to_save='./'):
-    if dir_to_save=='':
-        dir_to_save='.'
+    if dir_to_save == '':
+        dir_to_save = '.'
     # Set up the folder for the songs
     create_folder()
     global progress
@@ -153,7 +155,7 @@ def download_playlist(playlist_url, dir_to_save='./'):
             print(end_pos)
             shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
             i += 1
-            progress = i / len(playlist_to_get['tracks']['items'])*100
+            progress = i / len(playlist_to_get['tracks']['items']) * 100
         except Exception:
             continue
     i += 1
@@ -188,65 +190,136 @@ def auth_handler():
     return {'genius': genius_auth, 'spotify': spotify_auth}
 
 
-def set_progress():
-    global progress
-    progress_bar['value'] = progress
-    top.after(600, set_progress)
+def first_time_setup():
+    # Unzip ffmpeg if not present
+    if not os.path.exists('./ffmpeg.exe'):
+        with ZipFile('ffmpeg.zip', 'r') as zipObj:
+            # Extract all the contents of zip file in current directory
+            zipObj.extractall()
 
 
+
+
+
+def set_appwindow(root):
+    GWL_EXSTYLE = -20
+    WS_EX_APPWINDOW = 0x00040000
+    WS_EX_TOOLWINDOW = 0x00000080
+    hwnd = windll.user32.GetParent(root.winfo_id())
+    style = windll.user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
+    style = style & ~WS_EX_TOOLWINDOW
+    style = style | WS_EX_APPWINDOW
+    res = windll.user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
+    # re-assert the new window style
+    root.withdraw()
+    root.after(10, root.deiconify)
+
+
+class UI:
+    def __init__(self, master):
+        self.master = master
+        master.overrideredirect(True)  # turns off title bar, geometry
+        master.geometry('500x190+200+200')  # set new geometry
+        master.attributes('-topmost', True)
+        master.call("source", "forest-dark.tcl")
+        ttk.Style().theme_use('forest-dark')
+        self.custom_title_bar()
+        self.spawn_widgets()
+
+        self.master.after(10, set_appwindow, self.master)
+
+    def custom_title_bar(self):
+        # Create the title bar and Close-Button
+        self.title_bar = Frame(self.master, bg='#242424', relief='groove', bd=2, highlightthickness=0)
+        self.title_bar.config(borderwidth=0, highlightthickness=0)
+        self.close_button = Button(self.title_bar, text='X', command=self.master.destroy, bg="#242424", padx=2, pady=2,
+                                   activebackground='red',
+                                   bd=0, font="bold", fg='white', highlightthickness=0)
+        # Create a window
+        self.window = Canvas(self.master, bg='#2e2e2e', highlightthickness=0)
+
+        # Pack the above widgets
+        self.title_bar.pack(expand=1, fill=X)
+        self.close_button.pack(side=RIGHT)
+        self.window.pack(expand=1, fill=BOTH)
+        self.title_bar.bind('<Button-1>', self.SaveLastClickPos)
+        self.title_bar.bind('<B1-Motion>', self.Dragging)
+
+    def spawn_widgets(self):
+        self.E1 = ttk.Entry(self.master, width=50)
+        self.window.create_window(120, 15, anchor='nw', window=self.E1)
+        self.playlist_label = tkinter.Label(self.master, text="Link to Playlist")
+        self.window.create_window(10, 20, anchor='nw', window=self.playlist_label)
+
+        self.entryString = self.E1.get()
+
+        self.v = tkinter.StringVar()
+
+        self.select_folder = ttk.Button(self.master, text="Select folder", style='Accent.TButton',
+                                        command=browse_button)
+        self.window.create_window(120, 60, anchor='nw', window=self.select_folder)
+
+        self.download_button = ttk.Button(self.master, text="Download", style='Accent.TButton',
+                                          command=lambda: on_click(self.E1))
+        self.window.create_window(230, 60, anchor='nw', window=self.download_button)
+
+        self.progress_label = ttk.Label(self.master, text="Progress:")
+        self.window.create_window(10, 110, anchor='nw', window=self.progress_label)
+
+        self.progress_bar = ttk.Progressbar(self.master, orient='horizontal', length=365, mode='determinate')
+        self.window.create_window(120, 110, anchor='nw', window=self.progress_bar)
+
+    def set_progress(self):
+        global progress
+        self.progress_bar['value'] = progress
+        self.master.after(60, self.set_progress)
+
+    def SaveLastClickPos(self,event):
+        global lastClickX, lastClickY
+        lastClickX = event.x
+        lastClickY = event.y
+
+    def Dragging(self,event):
+        x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
+        self.master.geometry("+%s+%s" % (x, y))
+
+# Global Definitions
 folder_path = ''
 
 # Set the downloader
-audio_downloader = YoutubeDL({'format': 'bestaudio','postprocessors': [{
+audio_downloader = YoutubeDL({'format': 'bestaudio', 'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }]})
-
 tokens = auth_handler()
 sp = tokens['spotify']
 genius = tokens['genius']
 
-# Unzip ffmpeg if not present
-# TODO Make this a function
-if not os.path.exists('./ffmpeg.exe'):
-    with ZipFile('ffmpeg.zip', 'r') as zipObj:
-        # Extract all the contents of zip file in current directory
-        zipObj.extractall()
-
-
-# Get the playlist lin
-top = tkinter.Tk(className='Spotify Downloader')
-top.call("source", "forest-dark.tcl")
-ttk.Style().theme_use('forest-dark')
-
-top.geometry("470x150")
-top.columnconfigure(0, weight=2)
-top.columnconfigure(1, weight=3)
-top.columnconfigure(2, weight=3)
-top.columnconfigure(3, weight=3)
-
-playlist_label = tkinter.Label(top, text="Link to Playlist")
-playlist_label.grid(column=0, row=0, padx=5, pady=5, sticky=tkinter.W)
-
-E1 = ttk.Entry(top, width=50)
-E1.grid(column=1, row=0, padx=5, pady=5)
-entryString = E1.get()
-
+# Set the progress to be used for the progressbar
 progress = 0
 
-v = tkinter.StringVar()
-select_folder = ttk.Button(top, text="Select folder", style='Accent.TButton', command=browse_button)
-select_folder.grid(column=1, row=1, padx=100, pady=5, sticky=tkinter.W)
+# Used for the custom window
+lastClickX = 0
+lastClickY = 0
 
-download_button = ttk.Button(top, text="Download", style='Accent.TButton', command=lambda: on_click(E1))
-download_button.grid(column=1, row=1, padx=5, pady=5, sticky=tkinter.W)
+# Used by tkinter
+# TODO fix this?
+entryString=""
+v = ""
+def main():
+    global entryString
+    global v
+    root = Tk()
+    customUI = UI(root)
 
-progress_label = ttk.Label(top, text="Progress:")
-progress_label.grid(column=0, row=2, padx=5, pady=5, sticky=tkinter.W)
 
-progress_bar = ttk.Progressbar(top, orient='horizontal', length=300, mode='determinate')
-progress_bar.grid(column=1, row=2, padx=5, pady=5, sticky=tkinter.W)
-set_progress()
+    entryString = customUI.E1.get()
+    v = tkinter.StringVar()
+    customUI.set_progress()
+    root.after(10, set_appwindow, root)
+    root.mainloop()
 
-top.mainloop()
+
+if __name__ == "__main__":
+    main()
