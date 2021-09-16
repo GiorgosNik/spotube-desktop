@@ -13,6 +13,7 @@ import tkinter.filedialog
 import threading
 import time
 from tkinter import ttk
+from zipfile import ZipFile
 
 
 #   BIG 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
@@ -206,9 +207,15 @@ tokens = auth_handler()
 sp = tokens['spotify']
 genius = tokens['genius']
 
-# Get the playlist link
+# Unzip ffmpeg if not present
+# TODO Make this a function
+if not os.path.exists('./ffmpeg.exe'):
+    with ZipFile('ffmpeg.zip', 'r') as zipObj:
+        # Extract all the contents of zip file in current directory
+        zipObj.extractall()
 
 
+# Get the playlist lin
 top = tkinter.Tk(className='Spotify Downloader')
 top.call("source", "forest-dark.tcl")
 ttk.Style().theme_use('forest-dark')
