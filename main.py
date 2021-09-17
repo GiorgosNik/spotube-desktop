@@ -271,6 +271,10 @@ class UI:
                                           command=lambda: on_click(self.E1))
         self.window.create_window(230, 60, anchor='nw', window=self.download_button)
 
+        self.install_button = ttk.Button(self.master, text="Install", style='Accent.TButton',
+                                          command=first_time_setup())
+        self.window.create_window(340, 60, anchor='nw', window=self.install_button)
+
         self.progress_label = ttk.Label(self.master, text="Progress:")
         self.window.create_window(10, 110, anchor='nw', window=self.progress_label)
 
