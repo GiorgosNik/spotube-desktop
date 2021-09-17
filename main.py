@@ -198,9 +198,6 @@ def first_time_setup():
             zipObj.extractall()
 
 
-
-
-
 def set_appwindow(root):
     GWL_EXSTYLE = -20
     WS_EX_APPWINDOW = 0x00040000
@@ -215,6 +212,12 @@ def set_appwindow(root):
     root.after(10, root.deiconify)
 
 
+def save_last_click_pos(event):
+    global lastClickX, lastClickY
+    lastClickX = event.x
+    lastClickY = event.y
+
+
 class UI:
     def __init__(self, master):
         self.master = master
@@ -226,6 +229,7 @@ class UI:
         self.custom_title_bar()
         self.spawn_widgets()
 
+        # Spawn the program icon
         self.master.after(10, set_appwindow, self.master)
 
     def custom_title_bar(self):
@@ -242,8 +246,8 @@ class UI:
         self.title_bar.pack(expand=1, fill=X)
         self.close_button.pack(side=RIGHT)
         self.window.pack(expand=1, fill=BOTH)
-        self.title_bar.bind('<Button-1>', self.SaveLastClickPos)
-        self.title_bar.bind('<B1-Motion>', self.Dragging)
+        self.title_bar.bind('<Button-1>', save_last_click_pos)
+        self.title_bar.bind('<B1-Motion>', self.dragging)
 
     def spawn_widgets(self):
         self.E1 = ttk.Entry(self.master, width=50)
@@ -274,24 +278,20 @@ class UI:
         self.progress_bar['value'] = progress
         self.master.after(60, self.set_progress)
 
-    def SaveLastClickPos(self,event):
-        global lastClickX, lastClickY
-        lastClickX = event.x
-        lastClickY = event.y
-
-    def Dragging(self,event):
+    def dragging(self, event):
         x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
         self.master.geometry("+%s+%s" % (x, y))
+
 
 # Global Definitions
 folder_path = ''
 
 # Set the downloader
 audio_downloader = YoutubeDL({'format': 'bestaudio', 'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }]})
+    'key': 'FFmpegExtractAudio',
+    'preferredcodec': 'mp3',
+    'preferredquality': '192',
+}]})
 tokens = auth_handler()
 sp = tokens['spotify']
 genius = tokens['genius']
@@ -305,14 +305,15 @@ lastClickY = 0
 
 # Used by tkinter
 # TODO fix this?
-entryString=""
+entryString = ""
 v = ""
+
+
 def main():
     global entryString
     global v
     root = Tk()
     customUI = UI(root)
-
 
     entryString = customUI.E1.get()
     v = tkinter.StringVar()
