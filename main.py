@@ -89,11 +89,11 @@ def get_best_link(song_info):
     return best_link
 
 
-def get_youtube(given_link, song_info):
+def get_youtube(given_link, song_info,downloader):
     attempts = 0
     while attempts <= 5:
         try:
-            audio_downloader.extract_info(given_link)
+            downloader.extract_info(given_link)
             list_of_files = glob.glob('./*.mp3')  # * means all if need specific format then *.csv
             latest_file = max(list_of_files, key=os.path.getctime)
             print(latest_file)
@@ -118,6 +118,11 @@ def get_youtube(given_link, song_info):
 
 
 def download_playlist(playlist_url, dir_to_save='./'):
+    audio_downloader = YoutubeDL({'format': 'bestaudio', 'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }]})
     if dir_to_save == '':
         dir_to_save = '.'
     # Set up the folder for the songs
@@ -144,7 +149,7 @@ def download_playlist(playlist_url, dir_to_save='./'):
 
         # Try to download the song
         try:
-            get_youtube(link, songInfo)
+            get_youtube(link, songInfo,audio_downloader)
             # Edit the ID3 Tags
             set_tags(songInfo, genius)
 
@@ -180,10 +185,10 @@ def on_click(url_entry):
 
 def auth_handler():
     # Set the Lyrics Genius API Keys
-    genius_auth = lyricsgenius.Genius('5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ')
+    genius_auth = lyricsgenius.Genius("5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ")
 
     # Auth with the Spotify Framework
-    client_id = 'ff55dcadd44e4cb0819ebe5be80ab687'
+    client_id = "ff55dcadd44e4cb0819ebe5be80ab687"
     client_secret = '5539f7392ae94dd5b3dfc1d57381303a'
     auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
     spotify_auth = spotipy.Spotify(auth_manager=auth_manager)
@@ -198,7 +203,7 @@ def first_time_setup():
             zipObj.extractall()
 
 
-def set_appwindow(root):
+def set_app_window(root):
     GWL_EXSTYLE = -20
     WS_EX_APPWINDOW = 0x00040000
     WS_EX_TOOLWINDOW = 0x00000080
@@ -223,14 +228,13 @@ class UI:
         self.master = master
         master.overrideredirect(True)  # turns off title bar, geometry
         master.geometry('500x190+200+200')  # set new geometry
-        master.attributes('-topmost', True)
+        master.attributes('-topmost', False)
         master.call("source", "forest-dark.tcl")
         ttk.Style().theme_use('forest-dark')
         self.custom_title_bar()
         self.spawn_widgets()
 
-        # Spawn the program icon
-        self.master.after(10, set_appwindow, self.master)
+        self.master.after(10, set_app_window, self.master)
 
     def custom_title_bar(self):
         # Create the title bar and Close-Button
@@ -287,11 +291,6 @@ class UI:
 folder_path = ''
 
 # Set the downloader
-audio_downloader = YoutubeDL({'format': 'bestaudio', 'postprocessors': [{
-    'key': 'FFmpegExtractAudio',
-    'preferredcodec': 'mp3',
-    'preferredquality': '192',
-}]})
 tokens = auth_handler()
 sp = tokens['spotify']
 genius = tokens['genius']
@@ -306,19 +305,16 @@ lastClickY = 0
 # Used by tkinter
 # TODO fix this?
 entryString = ""
-v = ""
 
 
 def main():
     global entryString
-    global v
     root = Tk()
     customUI = UI(root)
 
     entryString = customUI.E1.get()
-    v = tkinter.StringVar()
     customUI.set_progress()
-    root.after(10, set_appwindow, root)
+    root.after(10, set_app_window, root)
     root.mainloop()
 
 
