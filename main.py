@@ -89,7 +89,7 @@ def get_best_link(song_info):
     return best_link
 
 
-def get_youtube(given_link, song_info,downloader):
+def get_youtube(given_link, song_info, downloader):
     attempts = 0
     while attempts <= 5:
         try:
@@ -149,7 +149,7 @@ def download_playlist(playlist_url, dir_to_save='./'):
 
         # Try to download the song
         try:
-            get_youtube(link, songInfo,audio_downloader)
+            get_youtube(link, songInfo, audio_downloader)
             # Edit the ID3 Tags
             set_tags(songInfo, genius)
 
@@ -180,7 +180,6 @@ def on_click(url_entry):
     given_url = url_entry.get()
     process_thread = threading.Thread(target=download_playlist, args=(given_url, folder_path,))
     process_thread.start()
-    # 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
 
 
 def auth_handler():
@@ -196,6 +195,7 @@ def auth_handler():
 
 
 def first_time_setup():
+    print("TEST2")
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
@@ -221,6 +221,15 @@ def save_last_click_pos(event):
     global lastClickX, lastClickY
     lastClickX = event.x
     lastClickY = event.y
+
+
+# TODO Cases for different folder setups
+def open_folder():
+    global folder_path
+    if folder_path=="":
+        folder_path='./Songs'
+    path = os.path.realpath(folder_path)
+    os.startfile(path)
 
 
 class UI:
@@ -265,15 +274,19 @@ class UI:
 
         self.select_folder = ttk.Button(self.master, text="Select folder", style='Accent.TButton',
                                         command=browse_button)
-        self.window.create_window(120, 60, anchor='nw', window=self.select_folder)
+        self.window.create_window(170, 60, anchor='nw', window=self.select_folder)
 
         self.download_button = ttk.Button(self.master, text="Download", style='Accent.TButton',
                                           command=lambda: on_click(self.E1))
-        self.window.create_window(230, 60, anchor='nw', window=self.download_button)
+        self.window.create_window(280, 60, anchor='nw', window=self.download_button)
 
         self.install_button = ttk.Button(self.master, text="Install", style='Accent.TButton',
-                                          command=first_time_setup())
-        self.window.create_window(340, 60, anchor='nw', window=self.install_button)
+                                         command=first_time_setup)
+        self.window.create_window(390, 60, anchor='nw', window=self.install_button)
+
+        self.open_folder_button = ttk.Button(self.master, text="Open Folder", style='Accent.TButton',
+                                             command=open_folder)
+        self.window.create_window(60, 60, anchor='nw', window=self.open_folder_button)
 
         self.progress_label = ttk.Label(self.master, text="Progress:")
         self.window.create_window(10, 110, anchor='nw', window=self.progress_label)
