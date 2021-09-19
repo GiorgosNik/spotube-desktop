@@ -174,7 +174,7 @@ def browse_button():
     folder_path = filename
 
 
-def on_click(url_entry):
+def download_button_click(url_entry):
     global folder_path
     global progress
     given_url = url_entry.get()
@@ -195,7 +195,6 @@ def auth_handler():
 
 
 def first_time_setup():
-    print("TEST2")
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
@@ -223,11 +222,15 @@ def save_last_click_pos(event):
     lastClickY = event.y
 
 
-# TODO Cases for different folder setups
 def open_folder():
     global folder_path
-    if folder_path=="":
-        folder_path='./Songs'
+    if folder_path == "":
+        if os.path.exists('./Songs'):
+            folder_path = './Songs'
+    else:
+        if os.path.exists(folder_path + '/Songs'):
+            folder_path = folder_path + '/Songs'
+
     path = os.path.realpath(folder_path)
     os.startfile(path)
 
@@ -236,7 +239,7 @@ class UI:
     def __init__(self, master):
         self.master = master
         master.overrideredirect(True)  # turns off title bar, geometry
-        master.geometry('500x190+200+200')  # set new geometry
+        master.geometry('500x190+700+400')  # set new geometry
         master.attributes('-topmost', False)
         master.call("source", "forest-dark.tcl")
         ttk.Style().theme_use('forest-dark')
@@ -277,7 +280,7 @@ class UI:
         self.window.create_window(170, 60, anchor='nw', window=self.select_folder)
 
         self.download_button = ttk.Button(self.master, text="Download", style='Accent.TButton',
-                                          command=lambda: on_click(self.E1))
+                                          command=lambda: download_button_click(self.E1))
         self.window.create_window(280, 60, anchor='nw', window=self.download_button)
 
         self.install_button = ttk.Button(self.master, text="Install", style='Accent.TButton',
@@ -302,6 +305,10 @@ class UI:
     def dragging(self, event):
         x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
         self.master.geometry("+%s+%s" % (x, y))
+
+    def spawn_message(self,given_message,given_title=None):
+        self.mesagebox = tkinter.messagebox.showinfo(title=given_title, message=given_message)
+
 
 
 # Global Definitions
@@ -330,6 +337,8 @@ def main():
     customUI = UI(root)
 
     entryString = customUI.E1.get()
+    if not os.path.exists('./ffmpeg.exe'):
+        customUI.spawn_message("This is your first time using Spotube, please click the install button")
     customUI.set_progress()
     root.after(10, set_app_window, root)
     root.mainloop()
