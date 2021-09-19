@@ -18,7 +18,7 @@ from tkinter import *
 from ctypes import windll
 
 
-#   BIG 'https://open.spotify.com/playlist/0g7eTKPSN1IarlunWjnITk?si=5bf57f257415482c'
+#   BIG 'https://open.spotify.com/playlist/3O7qs0truT99VZBP6iFiaS?si=8d35f6e96fbe4cca'
 #   Small https://open.spotify.com/playlist/4Yp12s7QSNItjrY3kmiEhh?si=9e9aad3e7ee94346'
 
 def create_folder():
