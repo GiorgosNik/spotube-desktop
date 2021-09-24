@@ -44,8 +44,6 @@ def get_lyrics(nameSearch, artistSearch, genius_obj):
     formatted_lyrics = genius_song.lyrics.rsplit(' ', 1)[0].replace("EmbedShare", '')
     formatted_lyrics = formatted_lyrics.rsplit(' ', 1)[0] + ''.join(
         [i for i in formatted_lyrics.rsplit(' ', 1)[1] if not i.isdigit()])
-    print("Got Lyrics:")
-    print(formatted_lyrics)
     return formatted_lyrics
 
 
@@ -95,7 +93,6 @@ def get_youtube(given_link, song_info, downloader):
             downloader.extract_info(given_link)
             list_of_files = glob.glob('./*.mp3')  # * means all if need specific format then *.csv
             latest_file = max(list_of_files, key=os.path.getctime)
-            print(latest_file)
             os.rename(latest_file, song_info['name'] + ".mp3")
             # Get the Cover Art
             image_url = song_info['url']
@@ -149,8 +146,6 @@ def download_playlist(playlist_url, dir_to_save='./'):
         duration = int(song['duration_ms'])
         songInfo = {'name': name, 'artist': artist, 'album': album, 'year': year, 'duration': duration,
                     'url': cover_art}
-        print("Searching for Name: ", name)
-
         # Search for the best candidate
         link = get_best_link(songInfo)
 
@@ -163,8 +158,6 @@ def download_playlist(playlist_url, dir_to_save='./'):
             # Move to the designated folder
             start_pos = './' + name + '.mp3'
             end_pos = dir_to_save + '/Songs/' + name + '.mp3'
-            print(start_pos)
-            print(end_pos)
             shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
             i += 1
             progress = i / len(tracks) * 100
@@ -172,12 +165,13 @@ def download_playlist(playlist_url, dir_to_save='./'):
             continue
     i += 1
     progress = i / len(tracks) * 100
+    # TODO Connect to UI
+    customUI.spawn_message("Playlist Downloaded, to view the songs, press Open Folder")
 
 
 def browse_button():
     global folder_path
     filename = tkinter.filedialog.askdirectory()
-    print(filename)
     folder_path = filename
 
 
@@ -333,7 +327,6 @@ lastClickX = 0
 lastClickY = 0
 
 # Used by tkinter
-# TODO fix this?
 entryString = ""
 
 
