@@ -11,7 +11,6 @@ import lyricsgenius
 import random
 import tkinter.filedialog
 import threading
-import time
 from tkinter import ttk
 from zipfile import ZipFile
 from tkinter import *
@@ -135,7 +134,6 @@ def download_playlist(playlist_url, dir_to_save='./'):
     while results['next']:
         results = sp.next(results)
         tracks.extend(results['items'])
-    playlist_to_get = sp.playlist(playlist_url)
 
     for item in tracks:
         # Format the song data
@@ -166,11 +164,11 @@ def download_playlist(playlist_url, dir_to_save='./'):
             print(end_pos)
             shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
             i += 1
-            progress = i / len(playlist_to_get['tracks']['items']) * 100
+            progress = i / len(tracks) * 100
         except Exception:
             continue
     i += 1
-    progress = i / len(playlist_to_get['tracks']['items']) * 100
+    progress = i / len(tracks) * 100
 
 
 def browse_button():
