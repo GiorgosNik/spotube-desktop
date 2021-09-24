@@ -129,9 +129,15 @@ def download_playlist(playlist_url, dir_to_save='./'):
     create_folder()
     global progress
     i = 0
+    # TODO Make this a function
+    results = sp.playlist_tracks(playlist_url)
+    tracks = results['items']
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
     playlist_to_get = sp.playlist(playlist_url)
-    for item in playlist_to_get['tracks']['items']:
-        time.sleep(1)
+
+    for item in tracks:
         # Format the song data
         song = item['track']
         cover_art = song['album']['images'][0]['url']
