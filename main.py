@@ -116,6 +116,15 @@ def get_youtube(given_link, song_info, downloader):
         raise Exception("Could not Download")
 
 
+def getSongs(playlist_link):
+    results = sp.playlist_tracks(playlist_link)
+    songs = results['items']
+    while results['next']:
+        results = sp.next(results)
+        songs.extend(results['items'])
+    return songs
+
+
 def download_playlist(playlist_url, dir_to_save='./'):
     audio_downloader = YoutubeDL({'format': 'bestaudio', 'postprocessors': [{
         'key': 'FFmpegExtractAudio',
@@ -128,13 +137,7 @@ def download_playlist(playlist_url, dir_to_save='./'):
     create_folder()
     global progress
     i = 0
-    # TODO Make this a function
-    results = sp.playlist_tracks(playlist_url)
-    tracks = results['items']
-    while results['next']:
-        results = sp.next(results)
-        tracks.extend(results['items'])
-
+    tracks = getSongs(playlist_url)
     for item in tracks:
         # Format the song data
         song = item['track']
@@ -310,9 +313,8 @@ class UI:
         x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
         self.master.geometry("+%s+%s" % (x, y))
 
-    def spawn_message(self,given_message,given_title=None):
+    def spawn_message(self, given_message, given_title=None):
         self.mesagebox = tkinter.messagebox.showinfo(title=given_title, message=given_message)
-
 
 
 # Global Definitions
