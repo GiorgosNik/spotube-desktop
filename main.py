@@ -76,12 +76,15 @@ def format_artists(artist_list):
 def get_best_link(song_info):
     min_difference = song_info['duration']
     video_search = VideosSearch(song_info['name'] + " " + song_info['artist'], limit=3)
+    best_link = None
     for searchItem in video_search.result()['result']:
         duration_str = searchItem['duration'].replace(":", " ").split()
         duration_int = int(duration_str[0]) * 60000 + int(duration_str[1]) * 1000
         if abs(duration_int - song_info['duration']) < min_difference:
             min_difference = abs(duration_int - song_info['duration'])
             best_link = searchItem['link']
+    if best_link is None:
+        return "NO LINK FOUND"
     print(song_info['name'], song_info['artist'], song_info['album'], song_info['year'], best_link)
     return best_link
 
@@ -148,7 +151,8 @@ def download_playlist(playlist_url, dir_to_save='./'):
                     'url': cover_art}
         # Search for the best candidate
         link = get_best_link(songInfo)
-
+        if link == "NO LINK FOUND":
+            continue
         # Try to download the song
         try:
             get_youtube(link, songInfo, audio_downloader)
@@ -166,7 +170,7 @@ def download_playlist(playlist_url, dir_to_save='./'):
     i += 1
     progress = i / len(tracks) * 100
     # TODO Connect to UI
-    customUI.spawn_message("Playlist Downloaded, to view the songs, press Open Folder")
+    # customUI.spawn_message("Playlist Downloaded, to view the songs, press Open Folder")
 
 
 def browse_button():
