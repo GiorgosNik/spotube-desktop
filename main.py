@@ -199,13 +199,13 @@ def auth_handler():
     return {'genius': genius_auth, 'spotify': spotify_auth}
 
 
-def first_time_setup(Caller_UI):
+"""def first_time_setup(Caller_UI):
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
             # Extract all the contents of zip file in current directory
             zipObj.extractall()
-            Caller_UI.spawn_message("Installation Complete, you can now use the program")
+            Caller_UI.spawn_message("Installation Complete, you can now use the program")"""
 
 
 def set_app_window(root):
@@ -283,19 +283,15 @@ class UI:
 
         self.select_folder = ttk.Button(self.master, text="Select folder", style='Accent.TButton',
                                         command=browse_button)
-        self.window.create_window(170, 60, anchor='nw', window=self.select_folder)
+        self.window.create_window(230, 60, anchor='nw', window=self.select_folder)
 
         self.download_button = ttk.Button(self.master, text="Download", style='Accent.TButton',
                                           command=lambda: download_button_click(self.E1))
-        self.window.create_window(280, 60, anchor='nw', window=self.download_button)
-
-        self.install_button = ttk.Button(self.master, text="Install", style='Accent.TButton',
-                                         command=lambda: first_time_setup(self))
-        self.window.create_window(390, 60, anchor='nw', window=self.install_button)
+        self.window.create_window(340, 60, anchor='nw', window=self.download_button)
 
         self.open_folder_button = ttk.Button(self.master, text="Open Folder", style='Accent.TButton',
                                              command=open_folder)
-        self.window.create_window(60, 60, anchor='nw', window=self.open_folder_button)
+        self.window.create_window(120, 60, anchor='nw', window=self.open_folder_button)
 
         self.progress_label = ttk.Label(self.master, text="Progress:")
         self.window.create_window(10, 110, anchor='nw', window=self.progress_label)
@@ -342,7 +338,7 @@ def main():
 
     entryString = customUI.E1.get()
     if not os.path.exists('./ffmpeg.exe'):
-        customUI.spawn_message("This is your first time using Spotube, please click the install button")
+        customUI.spawn_message("The ffmpeg executable was not found, please re-install")
     customUI.set_progress()
     root.after(10, set_app_window, root)
     root.mainloop()
