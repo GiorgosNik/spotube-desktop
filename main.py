@@ -199,12 +199,13 @@ def auth_handler():
     return {'genius': genius_auth, 'spotify': spotify_auth}
 
 
-def first_time_setup():
+def first_time_setup(UI):
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
             # Extract all the contents of zip file in current directory
             zipObj.extractall()
+            UI.spawn_message("Installation Complete, you can now use the program")
 
 
 def set_app_window(root):
@@ -289,7 +290,7 @@ class UI:
         self.window.create_window(280, 60, anchor='nw', window=self.download_button)
 
         self.install_button = ttk.Button(self.master, text="Install", style='Accent.TButton',
-                                         command=first_time_setup)
+                                         command=lambda: first_time_setup(self))
         self.window.create_window(390, 60, anchor='nw', window=self.install_button)
 
         self.open_folder_button = ttk.Button(self.master, text="Open Folder", style='Accent.TButton',
