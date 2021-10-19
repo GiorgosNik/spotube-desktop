@@ -199,13 +199,13 @@ def auth_handler():
     return {'genius': genius_auth, 'spotify': spotify_auth}
 
 
-def first_time_setup(UI):
+def first_time_setup(Caller_UI):
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
             # Extract all the contents of zip file in current directory
             zipObj.extractall()
-            UI.spawn_message("Installation Complete, you can now use the program")
+            Caller_UI.spawn_message("Installation Complete, you can now use the program")
 
 
 def set_app_window(root):

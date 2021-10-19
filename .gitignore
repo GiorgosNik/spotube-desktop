@@ -132,3 +132,4 @@ dmypy.json
 /ffmpeg.exe
 /Songs/
 .cache
+/output/
