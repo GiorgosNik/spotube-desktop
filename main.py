@@ -15,6 +15,7 @@ from tkinter import ttk
 from zipfile import ZipFile
 from tkinter import *
 from ctypes import windll
+import time
 
 
 #   BIG 'https://open.spotify.com/playlist/3O7qs0truT99VZBP6iFiaS?si=8d35f6e96fbe4cca'
@@ -136,9 +137,16 @@ def download_playlist(playlist_url, dir_to_save='./'):
     # Set up the folder for the songs
     create_folder()
     global progress
+    global timeSum
+    global size
+    global remaining
+    global timePerSong
     i = 0
     tracks = getSongs(playlist_url)
+    size = len(tracks)
+    remaining = size
     for item in tracks:
+        start = time.time()
         # Format the song data
         song = item['track']
         cover_art = song['album']['images'][0]['url']
@@ -165,10 +173,17 @@ def download_playlist(playlist_url, dir_to_save='./'):
             shutil.move('./' + name + '.mp3', dir_to_save + '/Songs/' + name + '.mp3')
             i += 1
             progress = i / len(tracks) * 100
+            end = time.time()
         except Exception:
             continue
+            end = time.time()
+        timeSum += end - start
+        remaining -= 1
+        timePerSong = timeSum / i
+
     i += 1
     progress = i / len(tracks) * 100
+
     # TODO Connect to UI
     # customUI.spawn_message("Playlist Downloaded, to view the songs, press Open Folder")
 
@@ -199,13 +214,15 @@ def auth_handler():
     return {'genius': genius_auth, 'spotify': spotify_auth}
 
 
-"""def first_time_setup(Caller_UI):
+def first_time_setup(Caller_UI):
     # Unzip ffmpeg if not present
     if not os.path.exists('./ffmpeg.exe'):
         with ZipFile('ffmpeg.zip', 'r') as zipObj:
             # Extract all the contents of zip file in current directory
             zipObj.extractall()
-            Caller_UI.spawn_message("Installation Complete, you can now use the program")"""
+            Caller_UI.spawn_message("Installation Complete, you can now use the program")
+    else:
+        Caller_UI.spawn_message("Program Already Installed")
 
 
 def set_app_window(root):
@@ -249,13 +266,6 @@ class UI:
         master.attributes('-topmost', False)
         master.call("source", "forest-dark.tcl")
         ttk.Style().theme_use('forest-dark')
-        self.custom_title_bar()
-        self.spawn_widgets()
-
-        self.master.after(10, set_app_window, self.master)
-
-    def custom_title_bar(self):
-        # Create the title bar and Close-Button
         self.title_bar = Frame(self.master, bg='#242424', relief='groove', bd=2, highlightthickness=0)
         self.title_bar.config(borderwidth=0, highlightthickness=0)
         self.close_button = Button(self.title_bar, text='X', command=self.master.destroy, bg="#242424", padx=2, pady=2,
@@ -271,7 +281,8 @@ class UI:
         self.title_bar.bind('<Button-1>', save_last_click_pos)
         self.title_bar.bind('<B1-Motion>', self.dragging)
 
-    def spawn_widgets(self):
+        # Create the widgets
+        self.master.after(10, set_app_window, self.master)
         self.E1 = ttk.Entry(self.master, width=50)
         self.window.create_window(120, 15, anchor='nw', window=self.E1)
         self.playlist_label = tkinter.Label(self.master, text="Link to Playlist")
@@ -283,33 +294,56 @@ class UI:
 
         self.select_folder = ttk.Button(self.master, text="Select folder", style='Accent.TButton',
                                         command=browse_button)
-        self.window.create_window(230, 60, anchor='nw', window=self.select_folder)
+        self.window.create_window(280, 60, anchor='nw', window=self.select_folder)
 
         self.download_button = ttk.Button(self.master, text="Download", style='Accent.TButton',
                                           command=lambda: download_button_click(self.E1))
-        self.window.create_window(340, 60, anchor='nw', window=self.download_button)
+        self.window.create_window(390, 60, anchor='nw', window=self.download_button)
 
         self.open_folder_button = ttk.Button(self.master, text="Open Folder", style='Accent.TButton',
                                              command=open_folder)
-        self.window.create_window(120, 60, anchor='nw', window=self.open_folder_button)
+        self.window.create_window(170, 60, anchor='nw', window=self.open_folder_button)
+
+        self.open_installButton = ttk.Button(self.master, text="Install", style='Accent.TButton',
+                                             command=lambda: first_time_setup(self))
+        self.window.create_window(10, 60, anchor='nw', window=self.open_installButton)
 
         self.progress_label = ttk.Label(self.master, text="Progress:")
-        self.window.create_window(10, 110, anchor='nw', window=self.progress_label)
+        self.window.create_window(10, 105, anchor='nw', window=self.progress_label)
 
         self.progress_bar = ttk.Progressbar(self.master, orient='horizontal', length=365, mode='determinate')
         self.window.create_window(120, 110, anchor='nw', window=self.progress_bar)
+
+        self.timer = ttk.Label(self.master, text="ETA: --:--:--")
+        self.window.create_window(120, 130, anchor='nw', window=self.timer)
+
+        self.messageBox = None
 
     def set_progress(self):
         global progress
         self.progress_bar['value'] = progress
         self.master.after(60, self.set_progress)
 
+    def set_ETA(self):
+        global hours
+        global minutes
+        global seconds
+        global timePerSong
+        global remaining
+        hours = remaining * timePerSong // 60 * 60
+        minutes = int(remaining * timePerSong - hours * 60 * 60)
+        seconds = remaining * timePerSong - int(remaining * timePerSong)
+        if timePerSong != 0:
+            self.timer.configure(text="ETA: " + str(hours) + ":" + str(minutes) + ":" + str(seconds))
+            self.master.after(60, self.set_ETA)
+        self.master.after(60, self.set_ETA)
+
     def dragging(self, event):
         x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
         self.master.geometry("+%s+%s" % (x, y))
 
     def spawn_message(self, given_message, given_title=None):
-        self.mesagebox = tkinter.messagebox.showinfo(title=given_title, message=given_message)
+        self.messageBox = tkinter.messagebox.showinfo(title=given_title, message=given_message)
 
 
 # Global Definitions
@@ -330,6 +364,14 @@ lastClickY = 0
 # Used by tkinter
 entryString = ""
 
+size = 0
+hours = 0
+minutes = 0
+seconds = 0
+timeSum = 0
+timePerSong = 0
+remaining = 0
+
 
 def main():
     global entryString
@@ -338,8 +380,9 @@ def main():
 
     entryString = customUI.E1.get()
     if not os.path.exists('./ffmpeg.exe'):
-        customUI.spawn_message("The ffmpeg executable was not found, please re-install")
+        customUI.spawn_message("The ffmpeg executable was not found, please run first time setup")
     customUI.set_progress()
+    customUI.set_ETA()
     root.after(10, set_app_window, root)
     root.mainloop()
 
