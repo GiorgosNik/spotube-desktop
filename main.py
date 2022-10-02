@@ -1,5 +1,5 @@
 import spotipy
-from youtube_dl import YoutubeDL
+from yt_dlp import YoutubeDL
 import os
 import glob
 from youtubesearchpython import VideosSearch
@@ -108,10 +108,10 @@ def get_youtube(given_link, song_info, downloader):
                     shutil.copyfileobj(r.raw, f)
                 print('Image successfully Downloaded: ', filename)
             else:
-                print('Image Couldn\'t be retrieved')
+                print('Image Could not be retrieved')
             return 0
         except Exception:
-            print("Couldn\'t download the audio,trying again...")
+            print("Could not download the audio,trying again...")
             attempts += 1
             continue
         raise Exception("Could not Download")
@@ -330,13 +330,14 @@ class UI:
         global seconds
         global timePerSong
         global remaining
-        hours = remaining * timePerSong // 60 * 60
-        minutes = int(remaining * timePerSong - hours * 60 * 60)
-        seconds = remaining * timePerSong - int(remaining * timePerSong)
+
+        hours = int((remaining * timePerSong) / (60 * 60))
+        minutes = int(((remaining * timePerSong) - (hours * 60 * 60)) / 60)
+        seconds = int((remaining * timePerSong) % 60)
+
         if timePerSong != 0:
             self.timer.configure(text="ETA: " + str(hours) + ":" + str(minutes) + ":" + str(seconds))
-            self.master.after(60, self.set_ETA)
-        self.master.after(60, self.set_ETA)
+        self.master.after(70, self.set_ETA)
 
     def dragging(self, event):
         x, y = event.x - lastClickX + self.master.winfo_x(), event.y - lastClickY + self.master.winfo_y()
@@ -379,6 +380,7 @@ def main():
     customUI = UI(root)
 
     entryString = customUI.E1.get()
+    print(entryString)
     if not os.path.exists('./ffmpeg.exe'):
         customUI.spawn_message("The ffmpeg executable was not found, please run first time setup")
     customUI.set_progress()
