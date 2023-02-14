@@ -10,7 +10,7 @@ import subprocess
 # Create API objects using the auth keys
 def auth_handler():
     genius_auth = lyricsgenius.Genius(
-        "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZssssssssssssssssssssss",
+        "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ",
         verbose=False,
     )
     client_id = "ff55dcadd44e4cb0819ebe5be80ab687"
