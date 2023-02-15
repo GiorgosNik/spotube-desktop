@@ -38,7 +38,7 @@ def first_time_setup():
                 else:
                     print("Invalid Input")
 
-            with ZipFile("ffmpeg.zip", "r") as archive:
+            with ZipFile("./static/ffmpeg.zip", "r") as archive:
                 archive.extractall()
 
     elif os.name == "posix":

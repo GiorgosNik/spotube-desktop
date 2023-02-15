@@ -1,6 +1,6 @@
-import utils
-from interface import interface
-from downloader import downloader
+import src.utils as utils
+from src.interface import interface
+from src. downloader import downloader
 
 if __name__ == "__main__":
     # Perform first time setup checks

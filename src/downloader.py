@@ -4,8 +4,7 @@ from youtubesearchpython import VideosSearch
 import eyed3
 import requests
 import shutil
-import utils
-import queue
+import src.utils as utils
 from tqdm import tqdm
 import threading
 
@@ -123,6 +122,12 @@ class downloader:
 
         return songs
 
+    # Handle message delivery in UI mode
+    @staticmethod
+    def send_message(channel, type, contents):
+        if channel is not None:
+            channel.put({"type": type, "contents": contents})
+
     # Return formated song data in a dictionary
     @staticmethod
     def format_song_data(song):
@@ -158,6 +163,9 @@ class downloader:
         playlist_progress = tqdm(total=playlist_size, desc="Playlist Progress", position=0, leave=False)
 
         for song in songs:
+            # Send Message to UI
+            downloader.send_message(channel, type="song_title", contents=song["track"]["name"])
+
             # Set song progress bar
             song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
 
@@ -198,9 +206,9 @@ class downloader:
 
             # Update tqdrm progress bar
             playlist_progress.update(n=1)
-
-            # TODO move to function
-            channel.put([playlist_progress.n, playlist_progress.total])
+            downloader.send_message(
+                channel, type="progress", contents=[playlist_progress.n, playlist_progress.total]
+            )
 
         playlist_progress.close()
 
