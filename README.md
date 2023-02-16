@@ -3,7 +3,7 @@ A simple Python app to download song audio based on a Spotify playlist
 
 ## Description
 Spotube enables the creation of local copies of Spotify playlists, complete will cover art, artist information and 
-lyrics, though an easy-to-use interface. The user provides the playlist list through the UI, and the application will 
+lyrics, though an easy-to-use ui_interface. The user provides the playlist list through the UI, and the application will 
 gather information on each song, find the most appropriate version of the song on YouTube, download the mp3 version and 
 combine it with the cover art, artist information and lyrics, if they are available on LyricsGenius.
 

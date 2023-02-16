@@ -5,6 +5,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import lyricsgenius
 from zipfile import ZipFile
 import subprocess
+import datetime
 
 
 # Create API objects using the auth keys
@@ -61,6 +62,12 @@ def first_time_setup():
 def create_folder(folder_path):
     if not os.path.isdir(folder_path + "/Songs"):
         os.mkdir(folder_path + "/Songs")
+
+
+def convert_sec_to_clock(seconds):
+    seconds = float(int(seconds))
+    time = str(datetime.timedelta(seconds=seconds))
+    return time
 
 
 # Create downloader object, pass options

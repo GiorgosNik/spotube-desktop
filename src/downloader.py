@@ -83,6 +83,19 @@ class downloader:
         return best_link
 
     @staticmethod
+    def download_image(song_info):
+        # Get the Cover Art
+        image_url = song_info["url"]
+        filename = "cover_photo.jpg"
+        image_request = requests.get(image_url, stream=True)
+
+        if image_request.status_code == 200:
+            image_request.raw.decode_content = True
+
+            with open(filename, "wb") as f:
+                shutil.copyfileobj(image_request.raw, f)
+
+    @staticmethod
     def donwload_song(given_link, song_info, downloader):
         attempts = 0
 
@@ -92,17 +105,6 @@ class downloader:
                 list_of_files = glob.glob("./*.mp3")
                 latest_file = max(list_of_files, key=os.path.getctime)
                 os.rename(latest_file, song_info["name"] + ".mp3")
-
-                # Get the Cover Art
-                image_url = song_info["url"]
-                filename = "cover_photo.jpg"
-                image_request = requests.get(image_url, stream=True)
-
-                if image_request.status_code == 200:
-                    image_request.raw.decode_content = True
-
-                    with open(filename, "wb") as f:
-                        shutil.copyfileobj(image_request.raw, f)
 
                 return
 
@@ -127,6 +129,17 @@ class downloader:
     def send_message(channel, type, contents):
         if channel is not None:
             channel.put({"type": type, "contents": contents})
+
+    @staticmethod
+    def get_elapsed(progressbar):
+        elapsed = progressbar.format_dict["elapsed"]
+        return elapsed
+
+    @staticmethod
+    def get_eta(progressbar):
+        rate = progressbar.format_dict["rate"]
+        remaining = (progressbar.total - progressbar.n) / rate if rate and progressbar.total else 0
+        return remaining
 
     # Return formated song data in a dictionary
     @staticmethod
@@ -163,9 +176,6 @@ class downloader:
         playlist_progress = tqdm(total=playlist_size, desc="Playlist Progress", position=0, leave=False)
 
         for song in songs:
-            # Send Message to UI
-            downloader.send_message(channel, type="song_title", contents=song["track"]["name"])
-
             # Set song progress bar
             song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
 
@@ -173,6 +183,14 @@ class downloader:
             song_progress.set_description(song_progress.desc + ": Formating Information")
             song_progress.update(n=1)
             info_dict = downloader.format_song_data(song)
+
+            # Download Cover Art, to preview to UI
+            downloader.download_image(info_dict)
+
+            # Send Message to UI
+            downloader.send_message(
+                channel, type="song_title", contents="{} by {}".format(info_dict["name"], info_dict["artist"].split(",")[0])
+            )
 
             # Search for the best candidate
             song_progress.set_description(info_dict["name"] + ": Selecting Best Link")
@@ -209,6 +227,10 @@ class downloader:
             downloader.send_message(
                 channel, type="progress", contents=[playlist_progress.n, playlist_progress.total]
             )
+
+            elapsed = downloader.get_elapsed(playlist_progress)
+            eta = downloader.get_eta(playlist_progress)
+            downloader.send_message(channel, type="eta_update", contents=[elapsed, eta])
 
         playlist_progress.close()
 

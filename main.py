@@ -1,5 +1,5 @@
 import src.utils as utils
-from src.interface import interface
+from src.ui_interface import ui_interface
 from src. downloader import downloader
 
 if __name__ == "__main__":
@@ -7,5 +7,5 @@ if __name__ == "__main__":
     utils.first_time_setup()
 
     # Create and start the UI
-    ui = interface()
+    ui = ui_interface()
     ui.run()
