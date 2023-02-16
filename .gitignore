@@ -140,3 +140,6 @@ sonar-project.properties
 
 # Code Config
 .vscode
+
+# Ignore music files
+*.mp3
