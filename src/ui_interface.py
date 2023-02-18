@@ -2,15 +2,20 @@ from tkinter import ttk
 import tkinter as tk
 import queue
 from datetime import datetime, time
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, showerror
 from src.downloader import downloader
 import src.utils as utils
 from tkinter.constants import W
 from PIL import ImageTk, Image
 
 DOWNLOAD_COMPLETE_MESSAGE = "Download Complete"
+INVALID_URL_MESSAGE = "Invalid Playlist Link"
 DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
 DEBUGGING_LINK_BIG = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
+DEBUGGING_LINK_BIG_SONG_NAME = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
+PLAYLIST_URL_ENTRY_PLACEHOLDER = "Enter Playlist URL"
+MAX_SONG_NAME_LEN = 40
+DEBUGGING = True
 
 
 class ui_interface:
@@ -27,15 +32,30 @@ class ui_interface:
 
         # Initialize internal counters and label strings
         self.progress_percentage = 0
-        self.progress_eta = ""
         self.progress_elapsed = ""
         self.progress_text = ""
+        self.progress_eta = 0
         self.time_start = datetime.now()
+        self.eta_received_time = datetime.now()
+        self.downloader_thread = None
 
-        # Progressbar
-        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate", length=300)
+        # Playlist URL input
+        self.playlist_link_entry = ttk.Entry(self.root, width=35)
+        self.playlist_link_entry.grid(column=0, row=1, columnspan=2, rowspan=2)
+
+        # Set Playlist Placeholder URL
+        self.playlist_link_entry.insert(0, PLAYLIST_URL_ENTRY_PLACEHOLDER)
+        self.playlist_link_entry.configure(state="disabled")
+
+        # Bind methods to remove and reset placeholder when applicable
+        self.playlist_link_entry.bind("<Button-1>", lambda x: utils.on_focus_in(self.playlist_link_entry))
+        self.playlist_link_entry.bind(
+            "<FocusOut>",
+            lambda x: utils.on_focus_out(self.playlist_link_entry, PLAYLIST_URL_ENTRY_PLACEHOLDER),
+        )
 
         # Set up the progressbar
+        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate", length=300)
         self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
 
         # Percentage Label
@@ -44,6 +64,8 @@ class ui_interface:
             column=0,
             row=1,
         )
+        # Hide the label until the download starts
+        self.progress_label.grid_remove()
 
         # ETA Label
         self.eta_label = ttk.Label(self.root, text="")
@@ -51,6 +73,8 @@ class ui_interface:
             column=1,
             row=1,
         )
+        # Hide the label until the download starts
+        self.eta_label.grid_remove()
 
         self.set_image("./images/cover_art.jpg")
 
@@ -87,13 +111,28 @@ class ui_interface:
 
     def update_song_label(self):
         self.root.geometry("480x150")
+
+        # Slice song title, if over a certain length
+        if len(self.progress_text) > MAX_SONG_NAME_LEN:
+            self.progress_text = self.progress_text[:MAX_SONG_NAME_LEN] + "..."
+
         self.song_label["text"] = "{}".format(self.progress_text)
         self.set_image("./cover_photo.jpg")
 
     def update_eta_label(self):
         # Only update the ETA label if the download has started
-        if self.progress_eta != "":
-            self.eta_label["text"] = "[{}<{}]".format(self.progress_elapsed, self.progress_eta)
+        if self.progress_elapsed != "":
+            if self.progress_eta == 0:
+                # If no ETA has been received yet, display question marks
+                eta_clock = "??:??:??"
+            else:
+                # If at least one ETA has been received
+                # Calculate how many seconds passed since the ETA was received, subtract from the ETA
+                seconds_since_last_eta = (datetime.now() - self.eta_received_time).seconds
+                actual_eta = self.progress_eta - seconds_since_last_eta
+                eta_clock = utils.convert_sec_to_clock(actual_eta)
+
+            self.eta_label["text"] = "[{}<{}]".format(self.progress_elapsed, eta_clock)
 
     def update_seconds_elapsed(self):
         seconds_elapsed = (datetime.now() - self.time_start).seconds
@@ -105,7 +144,8 @@ class ui_interface:
 
     # Convert Elapsed Seconds to ETA Clock Format
     def calculate_eta(self, eta):
-        self.progress_eta = utils.convert_sec_to_clock(eta)
+        self.eta_received_time = datetime.now()
+        self.progress_eta = eta
 
     # Direct different message types to different methods
     def handle_message(self, message):
@@ -128,18 +168,34 @@ class ui_interface:
         # Save start time to calculate time elapsed later
         self.time_start = datetime.now()
 
-        # Initialize the ETA to question marks until actual ETA message is received
-        self.progress_eta = "??:??:??"
+        # Get playlist URL from the Entry widget
+        link = self.playlist_link_entry.get()
 
         # Debugging URL
-        link = DEBUGGING_LINK_BIG
-        downloader.start_downloader(self.channel, link)
-        self.update_progress_label()
+        if DEBUGGING:
+            link = DEBUGGING_LINK_BIG
+
+        if downloader.validate_playlist_url(link):
+            self.downloader_thread = downloader.start_downloader(self.channel, link)
+            self.update_progress_label()
+
+            # Hide Entry
+            self.playlist_link_entry.grid_remove()
+            # Display ETA and Progress Percentage labels
+            self.eta_label.grid()
+            self.progress_label.grid()
+        else:
+            showerror(message=INVALID_URL_MESSAGE)
 
     # Handle the Stop Button, stop the download
     def stop(self):
         self.progress_bar.stop()
         self.progress_label["text"] = self.update_progress_label()
+
+        self.channel.put({"type": "KILL", "contents": None})
+
+        if self.downloader_thread is not None:
+            self.downloader_thread.join()
 
     # Main Loop
     def run(self):

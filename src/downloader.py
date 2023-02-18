@@ -162,6 +162,15 @@ class downloader:
 
         return info_dict
 
+    def validate_playlist_url(playlist_url):
+        tokens = utils.auth_handler()
+        try:
+            tokens["spotify"].playlist_tracks(playlist_url)
+        except Exception:
+            print("Playlist Link Not Found")
+            return False
+        return True
+
     @staticmethod
     def download_playlist(playlist_url, tokens, channel=None, directory="./"):
         audio_downloader = utils.create_audio_downloader()
@@ -176,6 +185,7 @@ class downloader:
         playlist_progress = tqdm(total=playlist_size, desc="Playlist Progress", position=0, leave=False)
 
         for song in songs:
+            
             # Set song progress bar
             song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
 
@@ -263,4 +273,7 @@ class downloader:
         tokens = utils.auth_handler()
 
         # Create a new thread to handle the download
-        threading.Thread(target=downloader.download_playlist, args=[link, tokens, channel]).start()
+        downloader_thread = threading.Thread(
+            target=downloader.download_playlist, args=[link, tokens, channel]
+        ).start()
+        return downloader_thread

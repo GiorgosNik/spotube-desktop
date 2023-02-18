@@ -6,6 +6,8 @@ import lyricsgenius
 from zipfile import ZipFile
 import subprocess
 import datetime
+from tkinter import ttk
+import tkinter as tk
 
 
 # Create API objects using the auth keys
@@ -88,3 +90,14 @@ def create_audio_downloader():
         }
     )
     return audio_downloader
+
+def on_focus_in(entry):
+    if str(entry.cget('state')) == 'disabled':
+        entry.configure(state='normal')
+        entry.delete(0, 'end')
+
+
+def on_focus_out(entry, placeholder):
+    if entry.get() == "":
+        entry.insert(0, placeholder)
+        entry.configure(state='disabled')

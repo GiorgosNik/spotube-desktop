@@ -145,3 +145,4 @@ sonar-project.properties
 *.mp3
 *.webm
 cover_photo.jpg
+*.webm*
