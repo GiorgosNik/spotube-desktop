@@ -96,7 +96,7 @@ class downloader:
                 shutil.copyfileobj(image_request.raw, f)
 
     @staticmethod
-    def donwload_song(given_link, song_info, downloader):
+    def download_song(given_link, song_info, downloader):
         attempts = 0
 
         while attempts <= 3:
@@ -141,7 +141,7 @@ class downloader:
         remaining = (progressbar.total - progressbar.n) / rate if rate and progressbar.total else 0
         return remaining
 
-    # Return formated song data in a dictionary
+    # Return formatted song data in a dictionary
     @staticmethod
     def format_song_data(song):
         song = song["track"]
@@ -179,8 +179,8 @@ class downloader:
             # Set song progress bar
             song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
 
-            # Retrieve Formated Song Data
-            song_progress.set_description(song_progress.desc + ": Formating Information")
+            # Retrieve Formatted Song Data
+            song_progress.set_description(song_progress.desc + ": Formatting Information")
             song_progress.update(n=1)
             info_dict = downloader.format_song_data(song)
 
@@ -189,7 +189,9 @@ class downloader:
 
             # Send Message to UI
             downloader.send_message(
-                channel, type="song_title", contents="{} by {}".format(info_dict["name"], info_dict["artist"].split(",")[0])
+                channel,
+                type="song_title",
+                contents="{} by {}".format(info_dict["name"], info_dict["artist"].split(",")[0]),
             )
 
             # Search for the best candidate
@@ -203,7 +205,7 @@ class downloader:
             try:
                 song_progress.set_description(info_dict["name"] + ": Downloading Song")
                 song_progress.update(n=1)
-                downloader.donwload_song(link, info_dict, audio_downloader)
+                downloader.download_song(link, info_dict, audio_downloader)
 
                 # Edit the ID3 Tags
                 song_progress.set_description(info_dict["name"] + ": Setting Tags")
@@ -222,7 +224,7 @@ class downloader:
                 continue
             song_progress.close()
 
-            # Update tqdrm progress bar
+            # Update tqdm progress bar
             playlist_progress.update(n=1)
             downloader.send_message(
                 channel, type="progress", contents=[playlist_progress.n, playlist_progress.total]

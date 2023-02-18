@@ -143,3 +143,5 @@ sonar-project.properties
 
 # Ignore music files
 *.mp3
+*.webm
+cover_photo.jpg
