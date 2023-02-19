@@ -3,10 +3,12 @@ import tkinter as tk
 import queue
 from datetime import datetime, time
 from tkinter.messagebox import showinfo, showerror
-from src.downloader import downloader
+from src.downloader_class import downloader
 import src.utils as utils
 from tkinter.constants import W
 from PIL import ImageTk, Image
+from time import sleep
+import os
 
 DOWNLOAD_COMPLETE_MESSAGE = "Download Complete"
 INVALID_URL_MESSAGE = "Invalid Playlist Link"
@@ -20,9 +22,6 @@ DEBUGGING = True
 
 class ui_interface:
     def __init__(self):
-        # Create the queue
-        self.channel = queue.Queue()
-
         # Create the window
         self.root = tk.Tk()
         self.root.tk.call("source", "./theme/forest-dark.tcl")
@@ -37,7 +36,8 @@ class ui_interface:
         self.progress_eta = 0
         self.time_start = datetime.now()
         self.eta_received_time = datetime.now()
-        self.downloader_thread = None
+        self.downloader = downloader()
+        self.prev_song = ""
 
         # Playlist URL input
         self.playlist_link_entry = ttk.Entry(self.root, width=35)
@@ -175,12 +175,16 @@ class ui_interface:
         if DEBUGGING:
             link = DEBUGGING_LINK_BIG
 
-        if downloader.validate_playlist_url(link):
-            self.downloader_thread = downloader.start_downloader(self.channel, link)
+        if self.downloader.validate_playlist_url(link):
+            # If the link is valid, start the download
+            self.download = self.downloader.start_downloader(link)
+
+            # Display the progress label
             self.update_progress_label()
 
             # Hide Entry
             self.playlist_link_entry.grid_remove()
+
             # Display ETA and Progress Percentage labels
             self.eta_label.grid()
             self.progress_label.grid()
@@ -192,18 +196,41 @@ class ui_interface:
         self.progress_bar.stop()
         self.progress_label["text"] = self.update_progress_label()
 
-        self.channel.put({"type": "KILL", "contents": None})
+        # Stop downloader object
+        self.downloader.stop_downloader()
 
-        if self.downloader_thread is not None:
-            self.downloader_thread.join()
+        self.progress_label.grid_remove()
+        self.eta_label.grid_remove()
+        self.song_label.grid_remove()
+        self.playlist_link_entry.grid()
+
+
+        # Restore Window Size
+        self.root.geometry("320x150")
+
+    def update_downloader_status(self):
+        progress = self.downloader.get_progress()
+        total = self.downloader.get_total()
+        current_song = self.downloader.get_current_song()
+        eta = self.downloader.get_eta()
+
+        if total is not None:
+            progress_percentage = self.calculate_progress(current=progress, total=total)
+            self.set_progress(progress_percentage)
+
+        if current_song is not None and self.prev_song != current_song:
+            self.prev_song = current_song
+            self.progress_text = current_song
+            self.update_song_label()
+
+            if eta is not None:
+                self.calculate_eta(eta)
+                self.update_eta_label()
 
     # Main Loop
     def run(self):
         while True:
-            if not self.channel.empty():
-                message = self.channel.get()
-                self.handle_message(message)
-
+            self.update_downloader_status()
             self.update_seconds_elapsed()
             self.update_eta_label()
             self.root.update_idletasks()
