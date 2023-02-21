@@ -1,11 +1,10 @@
-import src.utils as utils
 import threading
 import queue
 import src.downloader_utils as downloader_utils
 
 
 class downloader:
-    def __init__(self):
+    def __init__(self, spotify_id, spotify_secret, genius_token):
         # Initialise the tracking values
         self.progress = 0
         self.total = None
@@ -20,20 +19,31 @@ class downloader:
         self.termination_channel = queue.Queue()
 
         # Perform authentication for LyricsGenius and Spotify APIs
-        self.tokens = utils.auth_handler()
+        self.tokens = downloader_utils.auth_handler(spotify_id, spotify_secret, genius_token)
 
     def start_downloader(self, link):
         # Create a new thread to handle the download
         self.thread = threading.Thread(
             target=downloader_utils.download_playlist,
             args=[link, self.tokens, self.channel, self.termination_channel],
-        ).start()
+        )
+        self.thread.start()
 
     def stop_downloader(self):
         self.termination_channel.put(downloader_utils.EXIT)
 
+        # Wait for thread to exit
         if self.thread is not None:
             self.thread.join()
+
+        self.progress = 0
+        self.total = None
+        self.current_song = None
+        self.eta = None
+        self.thread = None
+        self.channel = queue.Queue()
+        self.termination_channel = queue.Queue()
+        self.tokens = downloader_utils.auth_handler()
 
     def validate_playlist_url(self, playlist_url):
         try:

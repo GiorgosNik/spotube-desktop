@@ -4,8 +4,18 @@ from youtubesearchpython import VideosSearch
 import eyed3
 import requests
 import shutil
-import src.utils as utils
 from tqdm import tqdm
+import spotipy
+from yt_dlp import YoutubeDL
+import os
+from spotipy.oauth2 import SpotifyClientCredentials
+import lyricsgenius
+from zipfile import ZipFile
+import subprocess
+import datetime
+from tkinter import ttk
+import tkinter as tk
+
 
 EXIT = "EXIT"
 
@@ -161,7 +171,7 @@ def format_song_data(song):
 
 
 def validate_playlist_url(playlist_url):
-    tokens = utils.auth_handler()
+    tokens = auth_handler()
     try:
         tokens["spotify"].playlist_tracks(playlist_url)
     except Exception:
@@ -171,10 +181,10 @@ def validate_playlist_url(playlist_url):
 
 
 def download_playlist(playlist_url, tokens, channel, termination_channel, directory="./"):
-    audio_downloader = utils.create_audio_downloader()
+    audio_downloader = create_audio_downloader()
 
     # Set up the folder for the songs
-    utils.create_folder(directory)
+    create_folder(directory)
 
     songs = get_songs(playlist_url, tokens["spotify"])
 
@@ -183,12 +193,6 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
     playlist_progress = tqdm(total=playlist_size, desc="Playlist Progress", position=0, leave=False)
 
     for song in songs:
-        # Check for termination message
-        if not termination_channel.empty():
-            message = termination_channel.get()
-            if message == EXIT:
-                exit()
-
         # Set song progress bar
         song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
 
@@ -237,6 +241,12 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
             continue
         song_progress.close()
 
+        # Check for termination message
+        if not termination_channel.empty():
+            message = termination_channel.get()
+            if message == EXIT:
+                exit()
+
         # Update tqdm progress bar
         playlist_progress.update(n=1)
         send_message(channel, type="progress", contents=[playlist_progress.n, playlist_progress.total])
@@ -247,23 +257,43 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
 
     playlist_progress.close()
 
+    # Create API objects using the auth keys
+def auth_handler(client_id, client_secret, genius):
+    genius_auth = lyricsgenius.Genius(
+        "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ",
+        verbose=False,
+    )
+    client_id = "ff55dcadd44e4cb0819ebe5be80ab687"
+    client_secret = "5539f7392ae94dd5b3dfc1d57381303a"
+    auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+    spotify_auth = spotipy.Spotify(auth_manager=auth_manager)
 
-def main_cli():
-    # Perform first time setup checks
-    utils.first_time_setup()
+    return {"genius": genius_auth, "spotify": spotify_auth}
 
-    # Perform authentication for LyricsGenius and Spotify APIs
-    tokens = utils.auth_handler()
 
-    # Main Functionality
-    while True:
-        response = input("Give the URL of a Spotify Playlist, or type 'EXIT' to close the application \n")
 
-        if response.lower() == "exit":
-            print("Exiting")
-            exit()
 
-        # For testing
-        response = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
-        download_playlist(response, tokens)
-        print("Playlist Downloaded")
+# Create a folder, if it does not exist
+def create_folder(folder_path):
+    if not os.path.isdir(folder_path + "/Songs"):
+        os.mkdir(folder_path + "/Songs")
+
+
+# Create downloader object, pass options
+def create_audio_downloader():
+    audio_downloader = YoutubeDL(
+        {
+            "format": "bestaudio",
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }
+            ],
+            "quiet": "true",
+            "no_warnings": "true",
+            "noprogress": "true",
+        }
+    )
+    return audio_downloader

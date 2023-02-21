@@ -1,6 +1,6 @@
 import src.utils as utils
 from src.ui_interface import ui_interface
-from src. downloader import downloader
+from src. downloader_class import downloader
 
 if __name__ == "__main__":
     # Perform first time setup checks

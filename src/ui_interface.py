@@ -19,6 +19,11 @@ PLAYLIST_URL_ENTRY_PLACEHOLDER = "Enter Playlist URL"
 MAX_SONG_NAME_LEN = 40
 DEBUGGING = True
 
+SPOTIFY_ID = "5539f7392ae94dd5b3dfc1d57381303a"
+SPOTIFY_SECRET = "5539f7392ae94dd5b3dfc1d57381303a"
+GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ"
+
+
 
 class ui_interface:
     def __init__(self):
@@ -36,7 +41,7 @@ class ui_interface:
         self.progress_eta = 0
         self.time_start = datetime.now()
         self.eta_received_time = datetime.now()
-        self.downloader = downloader()
+        self.downloader = downloader(SPOTIFY_ID, SPOTIFY_SECRET, GENIUS_TOKEN)
         self.prev_song = ""
 
         # Playlist URL input
@@ -83,11 +88,20 @@ class ui_interface:
         self.song_label.grid(column=0, row=2, columnspan=2, padx=10, pady=8)
 
         # Start Button
-        start_button = ttk.Button(self.root, text="Progress", command=self.start)
+        start_button = ttk.Button(self.root, text="Download", command=self.start)
         start_button.grid(column=0, row=3, padx=10, pady=10, sticky=tk.E)
 
         stop_button = ttk.Button(self.root, text="Stop", command=self.stop)
         stop_button.grid(column=1, row=3, padx=10, pady=10, sticky=tk.W)
+
+    def reset_values(self):
+        self.progress_percentage = 0
+        self.progress_elapsed = ""
+        self.progress_text = ""
+        self.progress_eta = 0
+        # self.time_start = datetime.now()
+        # self.eta_received_time = datetime.now()
+        # self.prev_song = ""
 
     def set_image(self, image):
         cover_art = Image.open(image)
@@ -104,6 +118,8 @@ class ui_interface:
         self.update_progress_label()
         if self.progress_bar["value"] >= 100:
             showinfo(message=DOWNLOAD_COMPLETE_MESSAGE)
+            self.progress_bar["value"] = 0
+            self.stop()
 
     def update_progress_label(self):
         percentage = "%.1f" % self.progress_percentage
@@ -117,6 +133,9 @@ class ui_interface:
             self.progress_text = self.progress_text[:MAX_SONG_NAME_LEN] + "..."
 
         self.song_label["text"] = "{}".format(self.progress_text)
+        while not os.path.exists("./cover_photo.jpg"):
+            sleep(0.1)
+            
         self.set_image("./cover_photo.jpg")
 
     def update_eta_label(self):
@@ -188,25 +207,31 @@ class ui_interface:
             # Display ETA and Progress Percentage labels
             self.eta_label.grid()
             self.progress_label.grid()
+            self.song_label.grid()
         else:
             showerror(message=INVALID_URL_MESSAGE)
 
     # Handle the Stop Button, stop the download
     def stop(self):
         self.progress_bar.stop()
+        self.progress_bar["value"] = 0
         self.progress_label["text"] = self.update_progress_label()
-
-        # Stop downloader object
-        self.downloader.stop_downloader()
 
         self.progress_label.grid_remove()
         self.eta_label.grid_remove()
         self.song_label.grid_remove()
         self.playlist_link_entry.grid()
 
-
         # Restore Window Size
         self.root.geometry("320x150")
+
+        # Stop downloader object
+        self.downloader.stop_downloader()
+
+        # Zero the progressbar
+        self.progress_bar["value"] = 0
+
+        self.reset_values()
 
     def update_downloader_status(self):
         progress = self.downloader.get_progress()
