@@ -11,6 +11,9 @@ class downloader:
         self.current_song = None
         self.eta = None
         self.thread = None
+        self.spotify_id = spotify_id
+        self.spotify_secret = spotify_secret
+        self.genius_token = genius_token
 
         # Set the channel that will handle the messages from the worker
         self.channel = queue.Queue()
@@ -19,7 +22,7 @@ class downloader:
         self.termination_channel = queue.Queue()
 
         # Perform authentication for LyricsGenius and Spotify APIs
-        self.tokens = downloader_utils.auth_handler(spotify_id, spotify_secret, genius_token)
+        self.tokens = downloader_utils.auth_handler(self.spotify_id, self.spotify_secret, self.genius_token)
 
     def start_downloader(self, link):
         # Create a new thread to handle the download
@@ -43,12 +46,13 @@ class downloader:
         self.thread = None
         self.channel = queue.Queue()
         self.termination_channel = queue.Queue()
-        self.tokens = downloader_utils.auth_handler()
+        self.tokens = downloader_utils.auth_handler(self.spotify_id, self.spotify_secret, self.genius_token)
 
     def validate_playlist_url(self, playlist_url):
         try:
             self.tokens["spotify"].playlist_tracks(playlist_url)
-        except Exception:
+        except Exception as e:
+            print (str(e))
             print("Playlist Link Not Found")
             return False
         return True

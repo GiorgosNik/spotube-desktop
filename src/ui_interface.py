@@ -19,7 +19,7 @@ PLAYLIST_URL_ENTRY_PLACEHOLDER = "Enter Playlist URL"
 MAX_SONG_NAME_LEN = 40
 DEBUGGING = True
 
-SPOTIFY_ID = "5539f7392ae94dd5b3dfc1d57381303a"
+SPOTIFY_ID = "ff55dcadd44e4cb0819ebe5be80ab687"
 SPOTIFY_SECRET = "5539f7392ae94dd5b3dfc1d57381303a"
 GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ"
 
@@ -192,7 +192,7 @@ class ui_interface:
 
         # Debugging URL
         if DEBUGGING:
-            link = DEBUGGING_LINK_BIG
+            link = DEBUGGING_LINK
 
         if self.downloader.validate_playlist_url(link):
             # If the link is valid, start the download

@@ -39,8 +39,8 @@ def get_lyrics(name_search, artist_search, genius_obj):
     return formatted_lyrics
 
 
-def set_tags(song_info, genius_obj):
-    audio_file = eyed3.load(song_info["name"] + ".mp3")
+def set_tags(song_info, genius_obj, directory = "./Songs"):
+    audio_file = eyed3.load(directory+"/"+song_info["name"] + ".mp3")
 
     if audio_file.tag is None:
         audio_file.initTag()
@@ -103,15 +103,15 @@ def download_image(song_info):
             shutil.copyfileobj(image_request.raw, f)
 
 
-def download_song(given_link, song_info, downloader):
+def download_song(given_link, song_info, downloader, directory = "./Songs"):
     attempts = 0
 
     while attempts <= 3:
         try:
             downloader.extract_info(given_link)
-            list_of_files = glob.glob("./*.mp3")
+            list_of_files = glob.glob(directory+"/*.mp3")
             latest_file = max(list_of_files, key=os.path.getctime)
-            os.rename(latest_file, song_info["name"] + ".mp3")
+            os.rename(latest_file, directory+"/"+song_info["name"] + ".mp3")
 
             return
 
@@ -170,21 +170,12 @@ def format_song_data(song):
     return info_dict
 
 
-def validate_playlist_url(playlist_url):
-    tokens = auth_handler()
-    try:
-        tokens["spotify"].playlist_tracks(playlist_url)
-    except Exception:
-        print("Playlist Link Not Found")
-        return False
-    return True
-
-
-def download_playlist(playlist_url, tokens, channel, termination_channel, directory="./"):
-    audio_downloader = create_audio_downloader()
-
+def download_playlist(playlist_url, tokens, channel, termination_channel, directory="./Songs"):
     # Set up the folder for the songs
-    create_folder(directory)
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+
+    audio_downloader = create_audio_downloader(directory)
 
     songs = get_songs(playlist_url, tokens["spotify"])
 
@@ -227,17 +218,18 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
             # Edit the ID3 Tags
             song_progress.set_description(info_dict["name"] + ": Setting Tags")
             song_progress.update(n=1)
-            set_tags(info_dict, tokens["genius"])
+            set_tags(info_dict, tokens["genius"], directory)
 
             # Move to the designated folder
             song_progress.set_description(info_dict["name"] + ": Moving to designated folder")
             song_progress.update(n=1)
-            shutil.move(
-                "./" + info_dict["name"] + ".mp3",
-                directory + "/Songs/" + info_dict["name"] + ".mp3",
-            )
+            # shutil.move(
+            #     "./" + info_dict["name"] + ".mp3",
+            #     directory + "/Songs/" + info_dict["name"] + ".mp3",
+            # )
 
-        except Exception:
+        except Exception as e:
+            print(str(e))
             continue
         song_progress.close()
 
@@ -258,29 +250,21 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
     playlist_progress.close()
 
     # Create API objects using the auth keys
+
+
 def auth_handler(client_id, client_secret, genius):
     genius_auth = lyricsgenius.Genius(
-        "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ",
+        genius,
         verbose=False,
     )
-    client_id = "ff55dcadd44e4cb0819ebe5be80ab687"
-    client_secret = "5539f7392ae94dd5b3dfc1d57381303a"
     auth_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
     spotify_auth = spotipy.Spotify(auth_manager=auth_manager)
 
     return {"genius": genius_auth, "spotify": spotify_auth}
 
 
-
-
-# Create a folder, if it does not exist
-def create_folder(folder_path):
-    if not os.path.isdir(folder_path + "/Songs"):
-        os.mkdir(folder_path + "/Songs")
-
-
 # Create downloader object, pass options
-def create_audio_downloader():
+def create_audio_downloader(directory="./Songs"):
     audio_downloader = YoutubeDL(
         {
             "format": "bestaudio",
@@ -291,6 +275,7 @@ def create_audio_downloader():
                     "preferredquality": "192",
                 }
             ],
+            "outtmpl": directory + "/%(title)s.%(ext)s",
             "quiet": "true",
             "no_warnings": "true",
             "noprogress": "true",
