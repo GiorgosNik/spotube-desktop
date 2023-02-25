@@ -12,6 +12,8 @@ import os
 from tkinter.filedialog import askdirectory
 
 DOWNLOAD_COMPLETE_MESSAGE = "Download Complete"
+FIRST_TIME_SETUP_MESSAGE_WINDOWS = "The ffmpeg utility is missing.\nInstalling now..."
+FIRST_TIME_SETUP_MESSAGE_UNIX = "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
 INVALID_URL_MESSAGE = "Invalid Playlist Link"
 DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
 DEBUGGING_LINK_BIG = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
@@ -33,6 +35,9 @@ class ui_interface:
         ttk.Style().theme_use("forest-dark")
         self.root.geometry("320x150")
         self.root.title("Spotube")
+
+        # Disable resizing the window
+        self.root.resizable(False, False)
 
         # Set folder dialog text to black to improve readability
         self.root.option_add("*TkFDialog*foreground", "black")
@@ -104,6 +109,19 @@ class ui_interface:
 
         self.folder_button = ttk.Button(self.root, text="Folder", command=self.folder)
         self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky=tk.W)
+
+        # Perform first time check
+        self.first_time_setup_check()
+
+
+    def first_time_setup_check(self):
+        if os.name == "nt":
+            message = FIRST_TIME_SETUP_MESSAGE_WINDOWS
+        elif os.name == "posix":
+            message = FIRST_TIME_SETUP_MESSAGE_UNIX
+
+        if not self.downloader.ffmpeg_installed():
+            showinfo(message=message)
 
     def reset_values(self):
         self.progress_percentage = 0
@@ -246,7 +264,10 @@ class ui_interface:
         self.downloader.stop_downloader()
 
     def folder(self):
-        self.selected_folder = askdirectory()
+        given_folder = askdirectory()
+        if type(given_folder) != tuple:
+            self.selected_folder = given_folder
+
         self.selected_folder += "/Songs"
         self.downloader.set_directory(self.selected_folder)
 

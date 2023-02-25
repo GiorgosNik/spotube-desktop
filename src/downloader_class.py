@@ -1,10 +1,12 @@
 import threading
 import queue
 import src.downloader_utils as downloader_utils
+import os
+import subprocess
 
 
 class downloader:
-    def __init__(self, spotify_id, spotify_secret, genius_token, directory = "./Songs"):
+    def __init__(self, spotify_id, spotify_secret, genius_token, directory="./Songs"):
         # Initialise the tracking values
         self.progress = 0
         self.total = None
@@ -56,7 +58,7 @@ class downloader:
         try:
             self.tokens["spotify"].playlist_tracks(playlist_url)
         except Exception as e:
-            print (str(e))
+            print(str(e))
             print("Playlist Link Not Found")
             return False
         return True
@@ -95,3 +97,27 @@ class downloader:
     def get_eta(self):
         self.fetch_messages()
         return self.eta
+
+    # Return True if ffmpeg is installed, False otherwise
+    @staticmethod
+    def ffmpeg_installed():
+        if os.name == "nt":
+            # Windows
+            if not os.path.exists("./ffmpeg.exe"):
+                return False
+
+        elif os.name == "posix":
+            # Unix
+            # Check if ffmpeg is installed
+            p = str(
+                subprocess.Popen(
+                    "which ffmpeg",
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ).communicate()[0]
+            )
+            if p == "b''":
+                return False
+
+        return True
