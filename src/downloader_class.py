@@ -4,7 +4,7 @@ import src.downloader_utils as downloader_utils
 
 
 class downloader:
-    def __init__(self, spotify_id, spotify_secret, genius_token):
+    def __init__(self, spotify_id, spotify_secret, genius_token, directory = "./Songs2"):
         # Initialise the tracking values
         self.progress = 0
         self.total = None
@@ -14,6 +14,7 @@ class downloader:
         self.spotify_id = spotify_id
         self.spotify_secret = spotify_secret
         self.genius_token = genius_token
+        self.directory = directory
 
         # Set the channel that will handle the messages from the worker
         self.channel = queue.Queue()
@@ -28,7 +29,7 @@ class downloader:
         # Create a new thread to handle the download
         self.thread = threading.Thread(
             target=downloader_utils.download_playlist,
-            args=[link, self.tokens, self.channel, self.termination_channel],
+            args=[link, self.tokens, self.channel, self.termination_channel, self.directory],
         )
         self.thread.start()
 

@@ -99,9 +99,6 @@ class ui_interface:
         self.progress_elapsed = ""
         self.progress_text = ""
         self.progress_eta = 0
-        # self.time_start = datetime.now()
-        # self.eta_received_time = datetime.now()
-        # self.prev_song = ""
 
     def set_image(self, image):
         cover_art = Image.open(image)

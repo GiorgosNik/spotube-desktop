@@ -18,6 +18,7 @@ import tkinter as tk
 
 
 EXIT = "EXIT"
+DEFAULT_DIR = "./Songs"
 
 
 def get_lyrics(name_search, artist_search, genius_obj):
@@ -39,8 +40,8 @@ def get_lyrics(name_search, artist_search, genius_obj):
     return formatted_lyrics
 
 
-def set_tags(song_info, genius_obj, directory = "./Songs"):
-    audio_file = eyed3.load(directory+"/"+song_info["name"] + ".mp3")
+def set_tags(song_info, genius_obj, directory=DEFAULT_DIR):
+    audio_file = eyed3.load(directory + "/" + song_info["name"] + ".mp3")
 
     if audio_file.tag is None:
         audio_file.initTag()
@@ -103,16 +104,15 @@ def download_image(song_info):
             shutil.copyfileobj(image_request.raw, f)
 
 
-def download_song(given_link, song_info, downloader, directory = "./Songs"):
+def download_song(given_link, song_info, downloader, directory=DEFAULT_DIR):
     attempts = 0
 
     while attempts <= 3:
         try:
             downloader.extract_info(given_link)
-            list_of_files = glob.glob(directory+"/*.mp3")
+            list_of_files = glob.glob(directory + "/*.mp3")
             latest_file = max(list_of_files, key=os.path.getctime)
-            os.rename(latest_file, directory+"/"+song_info["name"] + ".mp3")
-
+            os.rename(latest_file, directory + "/" + song_info["name"] + ".mp3")
             return
 
         except Exception as e:
@@ -170,7 +170,7 @@ def format_song_data(song):
     return info_dict
 
 
-def download_playlist(playlist_url, tokens, channel, termination_channel, directory="./Songs"):
+def download_playlist(playlist_url, tokens, channel, termination_channel, directory=DEFAULT_DIR):
     # Set up the folder for the songs
     if not os.path.isdir(directory):
         os.mkdir(directory)
@@ -185,7 +185,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
 
     for song in songs:
         # Set song progress bar
-        song_progress = tqdm(total=5, desc=song["track"]["name"], position=1, leave=False)
+        song_progress = tqdm(total=4, desc=song["track"]["name"], position=1, leave=False)
 
         # Retrieve Formatted Song Data
         song_progress.set_description(song_progress.desc + ": Formatting Information")
@@ -213,7 +213,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
         try:
             song_progress.set_description(info_dict["name"] + ": Downloading Song")
             song_progress.update(n=1)
-            download_song(link, info_dict, audio_downloader)
+            download_song(link, info_dict, audio_downloader, directory)
 
             # Edit the ID3 Tags
             song_progress.set_description(info_dict["name"] + ": Setting Tags")
@@ -223,10 +223,6 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
             # Move to the designated folder
             song_progress.set_description(info_dict["name"] + ": Moving to designated folder")
             song_progress.update(n=1)
-            # shutil.move(
-            #     "./" + info_dict["name"] + ".mp3",
-            #     directory + "/Songs/" + info_dict["name"] + ".mp3",
-            # )
 
         except Exception as e:
             print(str(e))
@@ -264,7 +260,7 @@ def auth_handler(client_id, client_secret, genius):
 
 
 # Create downloader object, pass options
-def create_audio_downloader(directory="./Songs"):
+def create_audio_downloader(directory=DEFAULT_DIR):
     audio_downloader = YoutubeDL(
         {
             "format": "bestaudio",
