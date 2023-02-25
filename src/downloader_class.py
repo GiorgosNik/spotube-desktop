@@ -4,7 +4,7 @@ import src.downloader_utils as downloader_utils
 
 
 class downloader:
-    def __init__(self, spotify_id, spotify_secret, genius_token, directory = "./Songs2"):
+    def __init__(self, spotify_id, spotify_secret, genius_token, directory = "./Songs"):
         # Initialise the tracking values
         self.progress = 0
         self.total = None
@@ -24,6 +24,9 @@ class downloader:
 
         # Perform authentication for LyricsGenius and Spotify APIs
         self.tokens = downloader_utils.auth_handler(self.spotify_id, self.spotify_secret, self.genius_token)
+
+    def set_directory(self, directory):
+        self.directory = directory
 
     def start_downloader(self, link):
         # Create a new thread to handle the download
