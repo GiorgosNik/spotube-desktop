@@ -127,10 +127,22 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/G-Eazy & Jack Harlow - Moana (Lyrics)-lHSQVo5Ti3k.webm.part
 /ffprobe.exe
 /ffmpeg.exe
 /Songs/
 .cache
 /output/
 /Release-Studio/
+
+# Sonarqube Files
+.scannerwork
+sonar-project.properties
+
+# Code Config
+.vscode
+
+# Ignore music files
+*.mp3
+*.webm
+cover_photo.jpg
+*.webm*
