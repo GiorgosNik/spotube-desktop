@@ -12,9 +12,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import lyricsgenius
 from zipfile import ZipFile
 import subprocess
-import datetime
-from tkinter import ttk
-import tkinter as tk
 
 
 EXIT = "EXIT"
@@ -47,7 +44,8 @@ def set_tags(song_info, genius_obj, directory=DEFAULT_DIR):
         audio_file.initTag()
 
     audio_file.tag.images.set(3, open("cover_photo.jpg", "rb").read(), "image/jpeg")
-    audio_file.tag.artist = song_info["artist"]
+    formatted_artist_string = song_info["artist"].replace(",", ";")
+    audio_file.tag.artist = formatted_artist_string
     audio_file.tag.title = song_info["name"]
     audio_file.tag.album = song_info["album"]
     audio_file.tag.year = song_info["year"]
@@ -245,7 +243,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
 
     playlist_progress.close()
 
-    # Create API objects using the auth keys
+    print("Download Complete")
 
 
 def auth_handler(client_id, client_secret, genius):

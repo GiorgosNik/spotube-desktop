@@ -1,7 +1,6 @@
 from tkinter import ttk
 import tkinter as tk
-import queue
-from datetime import datetime, time
+from datetime import datetime
 from tkinter.messagebox import showinfo, showerror
 from src.downloader_class import downloader
 import src.utils as utils
@@ -18,7 +17,7 @@ INVALID_URL_MESSAGE = "Invalid Playlist Link"
 DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
 DEBUGGING_LINK_BIG = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 DEBUGGING_LINK_BIG_SONG_NAME = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
-PLAYLIST_URL_ENTRY_PLACEHOLDER = "Enter Playlist URL"
+PLAYLIST_URL_ENTRY_PLACEHOLDER = "Playlist URL"
 MAX_SONG_NAME_LEN = 40
 DEBUGGING = True
 
@@ -218,7 +217,7 @@ class ui_interface:
 
         # Debugging URL
         if DEBUGGING:
-            link = DEBUGGING_LINK
+            link = DEBUGGING_LINK_BIG
 
         if self.downloader.validate_playlist_url(link):
             # If the link is valid, start the download
