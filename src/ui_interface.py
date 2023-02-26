@@ -99,14 +99,14 @@ class ui_interface:
         self.song_label.grid(column=0, row=2, columnspan=2, padx=10, pady=8)
 
         # Start Button
-        self.start_button = ttk.Button(self.root, text="Download", command=self.start)
+        self.start_button = ttk.Button(self.root, text="Download", command=self.start, style='Accent.TButton')
         self.start_button.grid(column=0, row=3, padx=10, pady=10, sticky=tk.E)
 
-        self.stop_button = ttk.Button(self.root, text="Stop", command=self.stop)
+        self.stop_button = ttk.Button(self.root, text="Stop", command=self.stop, style='Accent.TButton')
         self.stop_button.grid(column=1, row=3, padx=10, pady=10, sticky=tk.W)
         self.stop_button.grid_remove()
 
-        self.folder_button = ttk.Button(self.root, text="Folder", command=self.folder)
+        self.folder_button = ttk.Button(self.root, text="Folder", command=self.folder, style='Accent.TButton')
         self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky=tk.W)
 
         # Perform first time check

@@ -42,7 +42,7 @@ python3 spotube_ui.py
 
 When first starting the app, the user might be asked to perform a first time installation. For more information see the [Installation](#installation) section.
 
-![Initial State](images/ui.png)\
+![Initial State](images/initial_ui.png)\
 _The initial state of the UI_
 
 ### UI Guide
@@ -57,7 +57,7 @@ To download a spotify playlist:
 The UI will be updated to display the cover art of the current song, it`s title, the elapsed time and the estimated time until the download is complete.
 The progress bar will fill up accordingly.
 
-![Downloading](images/progress.png)\
+![Downloading](images/progress.gif)\
 _Dynamic UI updates_
 
 ## CLI Version
