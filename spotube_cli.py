@@ -12,7 +12,7 @@ DEBUGGING_LINK_BIG = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?s
 DEBUGGING_LINK_BIG_SONG_NAME = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
 PLAYLIST_URL_ENTRY_PLACEHOLDER = "Playlist URL"
 MAX_SONG_NAME_LEN = 40
-DEBUGGING = True
+DEBUGGING = False
 
 SPOTIFY_ID = "ff55dcadd44e4cb0819ebe5be80ab687"
 SPOTIFY_SECRET = "5539f7392ae94dd5b3dfc1d57381303a"
