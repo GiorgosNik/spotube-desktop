@@ -26,6 +26,7 @@ def first_time_setup_check(given_downloader):
         message = FIRST_TIME_SETUP_MESSAGE_UNIX
 
     if not given_downloader.ffmpeg_installed():
+        given_downloader.first_time_setup()
         print(message)
 
 
@@ -56,6 +57,7 @@ if __name__ == "__main__":
 
     # Perform first time checks
     first_time_setup_check(downloader_object)
+    downloader_object.first_time_setup()
 
     if DEBUGGING:
         url = DEBUGGING_LINK

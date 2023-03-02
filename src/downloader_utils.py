@@ -110,6 +110,10 @@ def download_song(given_link, song_info, downloader, directory=DEFAULT_DIR):
             downloader.extract_info(given_link)
             list_of_files = glob.glob(directory + "/*.mp3")
             latest_file = max(list_of_files, key=os.path.getctime)
+
+            # Overwrite the file, if it exists
+            if os.path.exists(directory + "/" + song_info["name"] + ".mp3"):
+                os.remove(directory + "/" + song_info["name"] + ".mp3")
             os.rename(latest_file, directory + "/" + song_info["name"] + ".mp3")
             return
 
@@ -244,6 +248,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
     playlist_progress.close()
 
     print("Download Complete")
+    send_message(channel, type="download_complete", contents=[])
 
 
 def auth_handler(client_id, client_secret, genius):
@@ -269,7 +274,7 @@ def create_audio_downloader(directory=DEFAULT_DIR):
                     "preferredquality": "192",
                 }
             ],
-            "outtmpl": directory + "/%(title)s.%(ext)s",
+            "outtmpl": directory + "/downloaded_song.%(ext)s",
             "quiet": "true",
             "no_warnings": "true",
             "noprogress": "true",
@@ -283,18 +288,6 @@ def first_time_setup():
     if os.name == "nt":
         # Windows
         if not os.path.exists("./ffmpeg.exe"):
-            while True:
-                setup_response = input("Perform Fist Time Setup? Y/N \n").lower()
-
-                if setup_response == "y":
-                    break
-
-                elif setup_response == "n":
-                    print("Setup Canceled. Exiting...")
-
-                else:
-                    print("Invalid Input")
-
             with ZipFile("./static/ffmpeg.zip", "r") as archive:
                 archive.extractall()
 

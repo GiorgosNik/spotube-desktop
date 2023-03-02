@@ -3,6 +3,7 @@ import queue
 import src.downloader_utils as downloader_utils
 import os
 import subprocess
+from zipfile import ZipFile
 
 
 class downloader:
@@ -77,6 +78,9 @@ class downloader:
         elif message["type"] == "eta_update":
             self.eta = contents[1]
 
+        elif message["type"] == "download_complete":
+            self.progress = self.total
+
     def fetch_messages(self):
         if not self.channel.empty():
             message = self.channel.get()
@@ -121,3 +125,26 @@ class downloader:
                 return False
 
         return True
+
+    # Setup ffmpeg if not present
+    def first_time_setup(self):
+        if os.name == "nt":
+            # Windows
+            if not os.path.exists("./ffmpeg.exe"):
+                with ZipFile("./static/ffmpeg.zip", "r") as archive:
+                    archive.extractall()
+
+        elif os.name == "posix":
+            # Unix
+            # Check if ffmpeg is installed
+            p = str(
+                subprocess.Popen(
+                    "which ffmpeg",
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ).communicate()[0]
+            )
+            if p == "b''":
+                print("Install ffmpeg by running:\n sudo apt-get install ffmpeg, then restart this program.")
+                exit()

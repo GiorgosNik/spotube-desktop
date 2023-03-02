@@ -10,21 +10,21 @@ from time import sleep
 import os
 from tkinter.filedialog import askdirectory
 
-DOWNLOAD_COMPLETE_MESSAGE = "Download Complete"
-FIRST_TIME_SETUP_MESSAGE_WINDOWS = "The ffmpeg utility is missing.\nInstalling now..."
-FIRST_TIME_SETUP_MESSAGE_UNIX = "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
-INVALID_URL_MESSAGE = "Invalid Playlist Link"
-DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
-DEBUGGING_LINK_BIG = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
-DEBUGGING_LINK_BIG_SONG_NAME = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
-PLAYLIST_URL_ENTRY_PLACEHOLDER = "Playlist URL"
-MAX_SONG_NAME_LEN = 40
-DEBUGGING = False
+# Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
+# Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
+# Big Playlist = "Playlist URL"
 
+# Debugging Settings
+DEBUGGING = False
+DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
+
+# Credentials and API Keys
 SPOTIFY_ID = "ff55dcadd44e4cb0819ebe5be80ab687"
 SPOTIFY_SECRET = "5539f7392ae94dd5b3dfc1d57381303a"
 GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ"
 
+# Global Settings
+MAX_SONG_NAME_LEN = 40
 
 class ui_interface:
     def __init__(self):
@@ -115,12 +115,16 @@ class ui_interface:
 
     def first_time_setup_check(self):
         if os.name == "nt":
-            message = FIRST_TIME_SETUP_MESSAGE_WINDOWS
+            message = "The ffmpeg utility is missing.\nInstalling now..."
         elif os.name == "posix":
-            message = FIRST_TIME_SETUP_MESSAGE_UNIX
+            message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
 
         if not self.downloader.ffmpeg_installed():
             showinfo(message=message)
+
+            # If OS is Windows, install extract ffmpeg.exe
+            if os.name == "nt":
+                self.downloader.first_time_setup()
 
     def reset_values(self):
         self.progress_percentage = 0
@@ -142,9 +146,13 @@ class ui_interface:
         self.progress_percentage = self.progress_bar["value"]
         self.update_progress_label()
         if self.progress_bar["value"] >= 100:
-            showinfo(message=DOWNLOAD_COMPLETE_MESSAGE)
+            showinfo(message="Download Complete")
             self.progress_bar["value"] = 0
             self.stop()
+            # Reset the playlist input field
+            self.playlist_link_entry.delete(0,tk.END)
+            self.playlist_link_entry.insert(0,"")
+            utils.on_focus_out(self.playlist_link_entry, PLAYLIST_URL_ENTRY_PLACEHOLDER)
 
     def update_progress_label(self):
         percentage = "%.1f" % self.progress_percentage
@@ -236,7 +244,7 @@ class ui_interface:
             self.stop_button.grid()
             self.folder_button.grid_remove()
         else:
-            showerror(message=INVALID_URL_MESSAGE)
+            showerror(message="Invalid Playlist Link")
 
     # Handle the Stop Button, stop the download
     def stop(self):
