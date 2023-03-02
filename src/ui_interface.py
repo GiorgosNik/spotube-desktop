@@ -12,7 +12,8 @@ from tkinter.filedialog import askdirectory
 
 # Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 # Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
-# Big Playlist = "Playlist URL"
+# Big Playlist = https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949
+# Big Rap Playlist = "https://open.spotify.com/playlist/2j71FgBAzmOjogzpmrf4lG?si=a92af70484fd4b3d"
 
 # Debugging Settings
 DEBUGGING = False
@@ -25,6 +26,7 @@ GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ
 
 # Global Settings
 MAX_SONG_NAME_LEN = 40
+PLAYLIST_URL_ENTRY_PLACEHOLDER = "Playlist URL"
 
 class ui_interface:
     def __init__(self):

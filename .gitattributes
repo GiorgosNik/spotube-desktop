@@ -1,3 +1,2 @@
 # Auto detect text files and perform LF normalization
-* linguist-vendored
-* .tcl linguist-vendored=true
+theme/* linguist-vendored
