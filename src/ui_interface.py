@@ -6,7 +6,6 @@ import src.utils as utils
 from PIL import Image
 from time import sleep
 import os
-from tkinter.filedialog import askdirectory
 import customtkinter as ctk
 from tkinter import filedialog
 
@@ -32,7 +31,7 @@ class ui_interface:
     def __init__(self):
         # Create the window
         self.root = ctk.CTk()
-        self.root.geometry("320x150")
+        self.root.geometry("320x170")
         self.root.title("Spotube")
 
         self.is_download_button_visible = True  # New flag for download button visibility
@@ -70,20 +69,6 @@ class ui_interface:
             "<FocusOut>",
             lambda x: utils.on_focus_out(self.playlist_link_entry, PLAYLIST_URL_ENTRY_PLACEHOLDER),
         )
-
-        # # Set up the progressbar
-        # self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
-        # self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
-
-        # # Percentage Label
-        # self.progress_label = ctk.CTkLabel(self.root, text="")
-        # self.progress_label.grid(column=0, row=1)
-        # self.progress_label.grid_remove()
-
-        # # ETA Label
-        # self.eta_label = ctk.CTkLabel(self.root, text="")
-        # self.eta_label.grid(column=1, row=1)
-        # self.eta_label.grid_remove()
 
         self.set_image("./images/cover_art.jpg")
 
@@ -181,7 +166,6 @@ class ui_interface:
                     eta_clock = utils.convert_sec_to_clock(actual_eta)
 
                 self.eta_label.configure(text="[{}<{}]".format(self.progress_elapsed, eta_clock))
-
 
     def update_seconds_elapsed(self):
         seconds_elapsed = (datetime.now() - self.time_start).seconds
