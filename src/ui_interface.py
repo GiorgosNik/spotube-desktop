@@ -63,19 +63,19 @@ class ui_interface:
             lambda x: utils.on_focus_out(self.playlist_link_entry, PLAYLIST_URL_ENTRY_PLACEHOLDER),
         )
 
-        # Set up the progressbar
-        self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
-        self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
+        # # Set up the progressbar
+        # self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
+        # self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
 
-        # Percentage Label
-        self.progress_label = ctk.CTkLabel(self.root, text="")
-        self.progress_label.grid(column=0, row=1)
-        self.progress_label.grid_remove()
+        # # Percentage Label
+        # self.progress_label = ctk.CTkLabel(self.root, text="")
+        # self.progress_label.grid(column=0, row=1)
+        # self.progress_label.grid_remove()
 
-        # ETA Label
-        self.eta_label = ctk.CTkLabel(self.root, text="")
-        self.eta_label.grid(column=1, row=1)
-        self.eta_label.grid_remove()
+        # # ETA Label
+        # self.eta_label = ctk.CTkLabel(self.root, text="")
+        # self.eta_label.grid(column=1, row=1)
+        # self.eta_label.grid_remove()
 
         self.set_image("./images/cover_art.jpg")
 
@@ -163,15 +163,17 @@ class ui_interface:
         self.set_image("./cover_photo.jpg")
 
     def update_eta_label(self):
-        if self.progress_elapsed != "":
-            if self.progress_eta == 0:
-                eta_clock = "??:??:??"
-            else:
-                seconds_since_last_eta = (datetime.now() - self.eta_received_time).seconds
-                actual_eta = self.progress_eta - seconds_since_last_eta
-                eta_clock = utils.convert_sec_to_clock(actual_eta)
+        if hasattr(self, 'eta_label') and self.eta_label:
+            if self.progress_elapsed != "":
+                if self.progress_eta == 0:
+                    eta_clock = "??:??:??"
+                else:
+                    seconds_since_last_eta = (datetime.now() - self.eta_received_time).seconds
+                    actual_eta = self.progress_eta - seconds_since_last_eta
+                    eta_clock = utils.convert_sec_to_clock(actual_eta)
 
-            self.eta_label.configure(text="[{}<{}]".format(self.progress_elapsed, eta_clock))
+                self.eta_label.configure(text="[{}<{}]".format(self.progress_elapsed, eta_clock))
+
 
     def update_seconds_elapsed(self):
         seconds_elapsed = (datetime.now() - self.time_start).seconds
@@ -207,6 +209,20 @@ class ui_interface:
             link = DEBUGGING_LINK
 
         if self.downloader.validate_playlist_url(link):
+            self.running = True  # Set running to True here
+
+            # Set up the progress bar
+            self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
+            self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
+        
+            # Set up the Percentage Label
+            self.progress_label = ctk.CTkLabel(self.root, text="")
+            self.progress_label.grid(column=0, row=1)
+        
+            # Set up the ETA Label
+            self.eta_label = ctk.CTkLabel(self.root, text="")
+            self.eta_label.grid(column=1, row=1)
+        
             self.download = self.downloader.start_downloader(link)
             self.update_progress_label()
             self.playlist_link_entry.grid_remove()
@@ -219,8 +235,21 @@ class ui_interface:
         else:
             showerror(message="Invalid Playlist Link")
 
+
     def stop(self):
-        self.progress_bar.set(0)
+        self.running = False  # Set running to False here
+
+        if hasattr(self, 'progress_bar') and self.progress_bar:
+            self.progress_bar.grid_remove()
+        if hasattr(self, 'progress_label') and self.progress_label:
+            self.progress_label.grid_remove()
+        if hasattr(self, 'eta_label') and self.eta_label:
+            self.eta_label.grid_remove()
+        
+        self.progress_bar = None
+        self.progress_label = None
+        self.eta_label = None
+        
         self.progress_label.configure(text="")
         self.progress_label.grid_remove()
         self.eta_label.grid_remove()
@@ -232,11 +261,10 @@ class ui_interface:
         self.root.geometry("320x150")
         self.reset_values()
         self.downloader.stop_downloader()
-        self.running = False
 
     def folder(self):
         given_folder = filedialog.askdirectory()
-        if type(given_folder) != tuple:
+        if not isinstance(given_folder, tuple):
             self.selected_folder = given_folder
 
         self.selected_folder += "/Songs"
@@ -263,9 +291,11 @@ class ui_interface:
 
     def schedule_update(self):
         if self.running:
-            self.update_downloader_status()
-            self.update_seconds_elapsed()
-            self.update_eta_label()
+            if hasattr(self, 'progress_bar') and self.progress_bar:
+                self.update_downloader_status()
+                self.update_seconds_elapsed()
+                if hasattr(self, 'eta_label') and self.eta_label:
+                    self.update_eta_label()
             self.root.after(100, self.schedule_update)
 
     def run(self):
