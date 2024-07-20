@@ -3,17 +3,12 @@ from datetime import datetime
 from tkinter.messagebox import showinfo, showerror
 from src.downloader_class import downloader
 import src.utils as utils
-from PIL import  Image
+from PIL import Image
 from time import sleep
 import os
 from tkinter.filedialog import askdirectory
 import customtkinter as ctk
 from tkinter import filedialog
-from tkinter.messagebox import showinfo, showerror
-from datetime import datetime
-from time import sleep
-import os
-from PIL import Image
 
 # Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 # Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
@@ -101,6 +96,16 @@ class ui_interface:
 
         # Perform first time check
         self.first_time_setup_check()
+
+        # Flag to indicate if the application is running
+        self.running = True
+
+        # Bind the close event to handle proper shutdown
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.running = False
+        self.root.destroy()
 
     def first_time_setup_check(self):
         if os.name == "nt":
@@ -199,7 +204,7 @@ class ui_interface:
         link = self.playlist_link_entry.get()
 
         if DEBUGGING:
-            link = DEBUGGING_LINK_BIG
+            link = DEBUGGING_LINK
 
         if self.downloader.validate_playlist_url(link):
             self.download = self.downloader.start_downloader(link)
@@ -210,6 +215,7 @@ class ui_interface:
             self.song_label.grid()
             self.stop_button.grid()
             self.folder_button.grid_remove()
+            self.schedule_update()
         else:
             showerror(message="Invalid Playlist Link")
 
@@ -226,6 +232,7 @@ class ui_interface:
         self.root.geometry("320x150")
         self.reset_values()
         self.downloader.stop_downloader()
+        self.running = False
 
     def folder(self):
         given_folder = filedialog.askdirectory()
@@ -254,10 +261,17 @@ class ui_interface:
                 self.calculate_eta(eta)
                 self.update_eta_label()
 
-    def run(self):
-        while True:
+    def schedule_update(self):
+        if self.running:
             self.update_downloader_status()
             self.update_seconds_elapsed()
             self.update_eta_label()
-            self.root.update_idletasks()
-            self.root.update()
+            self.root.after(100, self.schedule_update)
+
+    def run(self):
+        self.schedule_update()
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    ui = ui_interface()
+    ui.run()
