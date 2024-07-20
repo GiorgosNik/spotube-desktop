@@ -35,6 +35,14 @@ class ui_interface:
         self.root.geometry("320x150")
         self.root.title("Spotube")
 
+        self.is_download_button_visible = True  # New flag for download button visibility
+        self.is_progress_visible = False
+        self.is_eta_visible = False
+        self.is_song_label_visible = False
+        self.is_playlist_link_entry_visible = True
+        self.is_stop_button_visible = False
+        self.is_folder_button_visible = True
+
         # Disable resizing the window
         self.root.resizable(False, False)
 
@@ -214,53 +222,100 @@ class ui_interface:
             # Set up the progress bar
             self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
             self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
-        
+            self.is_progress_visible = True
+
             # Set up the Percentage Label
             self.progress_label = ctk.CTkLabel(self.root, text="")
             self.progress_label.grid(column=0, row=1)
-        
+            self.is_eta_visible = True
+
             # Set up the ETA Label
             self.eta_label = ctk.CTkLabel(self.root, text="")
             self.eta_label.grid(column=1, row=1)
-        
+            self.is_eta_visible = True
+
             self.download = self.downloader.start_downloader(link)
             self.update_progress_label()
-            self.playlist_link_entry.grid_remove()
-            self.eta_label.grid()
-            self.progress_label.grid()
-            self.song_label.grid()
-            self.stop_button.grid()
-            self.folder_button.grid_remove()
+            self.is_playlist_link_entry_visible = False
+            self.is_eta_visible = True
+            self.is_song_label_visible = True
+            self.is_stop_button_visible = True
+            self.is_folder_button_visible = False
+            self.is_download_button_visible = False  # Hide the download button
             self.schedule_update()
         else:
             showerror(message="Invalid Playlist Link")
-
+        self.manage_visibility()
 
     def stop(self):
         self.running = False  # Set running to False here
 
         if hasattr(self, 'progress_bar') and self.progress_bar:
             self.progress_bar.grid_remove()
+            self.is_progress_visible = False
         if hasattr(self, 'progress_label') and self.progress_label:
             self.progress_label.grid_remove()
+            self.is_eta_visible = False
         if hasattr(self, 'eta_label') and self.eta_label:
             self.eta_label.grid_remove()
-        
+            self.is_eta_visible = False
+
         self.progress_bar = None
         self.progress_label = None
         self.eta_label = None
-        
-        self.progress_label.configure(text="")
-        self.progress_label.grid_remove()
-        self.eta_label.grid_remove()
-        self.song_label.grid_remove()
-        self.playlist_link_entry.grid()
-        self.stop_button.grid_remove()
-        self.folder_button.grid()
+
+        self.is_eta_visible = False
+        self.is_song_label_visible = False
+        self.is_playlist_link_entry_visible = True
+        self.is_stop_button_visible = False
+        self.is_folder_button_visible = True
+        self.is_download_button_visible = True  # Show the download button again
 
         self.root.geometry("320x150")
         self.reset_values()
         self.downloader.stop_downloader()
+        self.manage_visibility()
+
+    def manage_visibility(self):
+        if hasattr(self, 'progress_bar') and self.progress_bar:
+            if self.is_progress_visible:
+                self.progress_bar.grid()
+            else:
+                self.progress_bar.grid_remove()
+
+        if hasattr(self, 'progress_label') and self.progress_label:
+            if self.is_eta_visible:
+                self.progress_label.grid()
+                self.eta_label.grid()
+            else:
+                self.progress_label.grid_remove()
+                self.eta_label.grid_remove()
+
+        if hasattr(self, 'song_label') and self.song_label:
+            if self.is_song_label_visible:
+                self.song_label.grid()
+            else:
+                self.song_label.grid_remove()
+
+        if self.is_playlist_link_entry_visible:
+            self.playlist_link_entry.grid()
+        else:
+            self.playlist_link_entry.grid_remove()
+
+        if self.is_stop_button_visible:
+            self.stop_button.grid()
+        else:
+            self.stop_button.grid_remove()
+
+        if self.is_folder_button_visible:
+            self.folder_button.grid()
+        else:
+            self.folder_button.grid_remove()
+
+        if self.is_download_button_visible:
+            self.start_button.grid()
+        else:
+            self.start_button.grid_remove()
 
     def folder(self):
         given_folder = filedialog.askdirectory()
@@ -296,11 +351,14 @@ class ui_interface:
                 self.update_seconds_elapsed()
                 if hasattr(self, 'eta_label') and self.eta_label:
                     self.update_eta_label()
+            self.manage_visibility()
             self.root.after(100, self.schedule_update)
 
     def run(self):
         self.schedule_update()
+        self.manage_visibility()
         self.root.mainloop()
+
 
 if __name__ == "__main__":
     ui = ui_interface()
