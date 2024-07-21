@@ -206,10 +206,11 @@ class ui_interface:
             # Set up the progress bar
             self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
             self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
+            self.progress_bar.set(0)  # Initialize the progress bar to 0
             self.is_progress_visible = True
 
             # Set up the Percentage Label
-            self.progress_label = ctk.CTkLabel(self.root, text="")
+            self.progress_label = ctk.CTkLabel(self.root, text="0%")  # Initialize the progress label to 0%
             self.progress_label.grid(column=0, row=1)
             self.is_eta_visible = True
 
@@ -218,6 +219,7 @@ class ui_interface:
             self.eta_label.grid(column=1, row=1)
             self.is_eta_visible = True
 
+            self.progress_percentage = 0  # Ensure progress percentage is set to 0
             self.download = self.downloader.start_downloader(link)
             self.update_progress_label()
             self.is_playlist_link_entry_visible = False
