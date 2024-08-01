@@ -7,12 +7,15 @@ import shutil
 from tqdm import tqdm
 import spotipy
 from yt_dlp import YoutubeDL
-import os
 from spotipy.oauth2 import SpotifyClientCredentials
 import lyricsgenius
 from zipfile import ZipFile
 import subprocess
+import logging
 
+# Setup logging configuration
+logging.basicConfig(filename='download_errors.log', level=logging.ERROR,
+                    format='%(asctime)s:%(levelname)s:%(message)s')
 
 EXIT = "EXIT"
 DEFAULT_DIR = "./Songs"
@@ -71,19 +74,23 @@ def format_artists(artist_list):
 
 
 def get_link(song_info):
-    min_difference = song_info["duration"]
-    video_search = VideosSearch(song_info["name"] + " " + song_info["artist"], limit=3)
-    best_link = None
+    try:
+        min_difference = song_info["duration"]
+        video_search = VideosSearch(song_info["name"] + " " + song_info["artist"], limit=3)
+        best_link = None
 
-    for search_result in video_search.result()["result"]:
-        duration_str = search_result["duration"].replace(":", " ").split()
-        duration_int = int(duration_str[0]) * 60000 + int(duration_str[1]) * 1000
+        for search_result in video_search.result()["result"]:
+            duration_str = search_result["duration"].replace(":", " ").split()
+            duration_int = int(duration_str[0]) * 60000 + int(duration_str[1]) * 1000
 
-        if abs(duration_int - song_info["duration"]) < min_difference:
-            min_difference = abs(duration_int - song_info["duration"])
-            best_link = search_result["link"]
+            if abs(duration_int - song_info["duration"]) < min_difference:
+                min_difference = abs(duration_int - song_info["duration"])
+                best_link = search_result["link"]
 
-    if best_link is None:
+        if best_link is None:
+            best_link = ""
+
+    except Exception:
         best_link = ""
 
     return best_link
@@ -118,7 +125,6 @@ def download_song(given_link, song_info, downloader, directory=DEFAULT_DIR):
             return
 
         except Exception as e:
-            print(str(e))
             attempts += 1
             continue
 
@@ -209,6 +215,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
         song_progress.update(n=1)
         link = get_link(info_dict)
         if link == "":
+            logging.error(f"Failed to download {info_dict['name']} after 3 attempts. Error: Could not find link")
             continue
 
         # Download the song
@@ -227,7 +234,7 @@ def download_playlist(playlist_url, tokens, channel, termination_channel, direct
             song_progress.update(n=1)
 
         except Exception as e:
-            print(str(e))
+            logging.error(f"Failed to download {info_dict['name']} after 3 attempts. Error: {str(e)}")
             continue
         song_progress.close()
 
