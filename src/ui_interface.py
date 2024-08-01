@@ -27,12 +27,21 @@ GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ
 MAX_SONG_NAME_LEN = 40
 PLAYLIST_URL_ENTRY_PLACEHOLDER = "Playlist URL"
 
+# Spotify-like Colors
+BG_COLOR = "#191414"
+TEXT_COLOR = "#FFFFFF"
+ACCENT_COLOR = "#116A2D"
+HOVER_COLOR = "#0F5A26"
+
+FONT = ("Arial", 10)
+
 class ui_interface:
     def __init__(self):
         # Create the window
         self.root = ctk.CTk()
         self.root.geometry("320x170")
         self.root.title("Spotube")
+        self.root.configure(bg=BG_COLOR)
 
         self.is_download_button_visible = True  # New flag for download button visibility
         self.is_progress_visible = False
@@ -57,7 +66,7 @@ class ui_interface:
         self.selected_folder = "./Songs"
 
         # Playlist URL input
-        self.playlist_link_entry = ctk.CTkEntry(self.root, width=250, placeholder_text=PLAYLIST_URL_ENTRY_PLACEHOLDER)
+        self.playlist_link_entry = ctk.CTkEntry(self.root, width=250, placeholder_text=PLAYLIST_URL_ENTRY_PLACEHOLDER, font=FONT)
         self.playlist_link_entry.grid(column=0, row=1, columnspan=2, rowspan=2, padx=10, pady=10)
 
         # Set Playlist Placeholder URL
@@ -73,18 +82,27 @@ class ui_interface:
         self.set_image("./images/cover_art.jpg")
 
         # The name of the song being processed
-        self.song_label = ctk.CTkLabel(self.root, text="")
+        self.song_label = ctk.CTkLabel(self.root, text="", text_color=TEXT_COLOR, font=FONT)
         self.song_label.grid(column=0, row=2, columnspan=2, padx=10, pady=8)
 
-        # Start Button
-        self.start_button = ctk.CTkButton(self.root, text="Download", command=self.start)
+         # Start Button
+        self.start_button = ctk.CTkButton(
+            self.root, text="Download", command=self.start, fg_color=ACCENT_COLOR, 
+            text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
+        )
         self.start_button.grid(column=0, row=3, padx=10, pady=10, sticky="e")
 
-        self.stop_button = ctk.CTkButton(self.root, text="Stop", command=self.stop)
+        self.stop_button = ctk.CTkButton(
+            self.root, text="Stop", command=self.stop, fg_color=ACCENT_COLOR, 
+            text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
+        )
         self.stop_button.grid(column=1, row=3, padx=10, pady=10, sticky="w")
         self.stop_button.grid_remove()
 
-        self.folder_button = ctk.CTkButton(self.root, text="Folder", command=self.folder)
+        self.folder_button = ctk.CTkButton(
+            self.root, text="Folder", command=self.folder, fg_color=ACCENT_COLOR, 
+            text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
+        )
         self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky="w")
 
         # Perform first time check
@@ -123,7 +141,7 @@ class ui_interface:
         cover_art = Image.open(image_path)
         cover_art = cover_art.resize((150, 150), Image.LANCZOS)
         cover_art_element = ctk.CTkImage(light_image=cover_art, dark_image=cover_art, size=(150, 150))
-        self.label = ctk.CTkLabel(self.root, image=cover_art_element, text='')
+        self.label = ctk.CTkLabel(self.root, image=cover_art_element, text='', bg_color=BG_COLOR)
         self.label.grid(column=5, row=0, columnspan=3, rowspan=4, padx=10)
         self.label.image = cover_art_element
 
@@ -173,6 +191,7 @@ class ui_interface:
 
     def calculate_progress(self, current, total):
         return (current / total) * 100
+
 
     def calculate_eta(self, eta):
         self.eta_received_time = datetime.now()
