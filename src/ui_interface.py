@@ -1,13 +1,13 @@
 import tkinter as tk
 from datetime import datetime
 from tkinter.messagebox import showinfo, showerror
-from src.downloader_class import downloader
 import src.utils as utils
 from PIL import Image
 from time import sleep
 import os
 import customtkinter as ctk
 from tkinter import filedialog
+from spotube.download_manager import DownloadManager
 
 # Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 # Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
@@ -37,13 +37,12 @@ FONT = ("Arial", 10)
 
 class ui_interface:
     def __init__(self):
-        # Create the window
+        # Initialize the window and UI elements as before
         self.root = ctk.CTk()
         self.root.geometry("320x170")
         self.root.title("Spotube")
         self.root.configure(bg=BG_COLOR)
-
-        self.is_download_button_visible = True  # New flag for download button visibility
+        self.is_download_button_visible = True
         self.is_progress_visible = False
         self.is_eta_visible = False
         self.is_song_label_visible = False
@@ -61,7 +60,6 @@ class ui_interface:
         self.progress_eta = 0
         self.time_start = datetime.now()
         self.eta_received_time = datetime.now()
-        self.downloader = downloader(SPOTIFY_ID, SPOTIFY_SECRET, GENIUS_TOKEN)
         self.prev_song = ""
         self.selected_folder = "./Songs"
 
@@ -85,7 +83,7 @@ class ui_interface:
         self.song_label = ctk.CTkLabel(self.root, text="", text_color=TEXT_COLOR, font=FONT)
         self.song_label.grid(column=0, row=2, columnspan=2, padx=10, pady=8)
 
-         # Start Button
+        # Start Button
         self.start_button = ctk.CTkButton(
             self.root, text="Download", command=self.start, fg_color=ACCENT_COLOR, 
             text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
@@ -105,8 +103,16 @@ class ui_interface:
         )
         self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky="w")
 
-        # Perform first time check
-        self.first_time_setup_check()
+        # # Perform first time check
+        # self.first_time_setup_check()
+
+        # Initialize DownloadManager
+        self.downloader = DownloadManager(
+            spotify_client_id=SPOTIFY_ID,
+            spotify_client_secret=SPOTIFY_SECRET,
+            genius_api_key=GENIUS_TOKEN,
+            directory=self.selected_folder
+        )
 
         # Flag to indicate if the application is running
         self.running = True
@@ -116,20 +122,18 @@ class ui_interface:
 
     def on_close(self):
         self.running = False
+        self.stop()
         self.root.destroy()
 
-    def first_time_setup_check(self):
-        if os.name == "nt":
-            message = "The ffmpeg utility is missing.\nInstalling now..."
-        elif os.name == "posix":
-            message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
-
-        if not self.downloader.ffmpeg_installed():
-            showinfo(message=message)
-
-            # If OS is Windows, install extract ffmpeg.exe
-            if os.name == "nt":
-                self.downloader.first_time_setup()
+    # def first_time_setup_check(self):
+    #     if not DependencyHandler.ffmpeg_installed():
+    #         if os.name == "nt":
+    #             message = "The ffmpeg utility is missing.\nInstalling now..."
+    #         elif os.name == "posix":
+    #             message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
+    #         showinfo(message=message)
+    #         if os.name == "nt":
+    #             DependencyHandler.download_ffmpeg(os_type=os.name)
 
     def reset_values(self):
         self.progress_percentage = 0
@@ -163,15 +167,12 @@ class ui_interface:
 
     def update_song_label(self):
         self.root.geometry("480x150")
-
         if len(self.progress_text) > MAX_SONG_NAME_LEN:
             self.progress_text = self.progress_text[:MAX_SONG_NAME_LEN] + "..."
-
         self.song_label.configure(text=self.progress_text)
-        while not os.path.exists("./cover_photo.jpg"):
+        while not os.path.exists(self.selected_folder+"/cover_photo.jpg"):
             sleep(0.1)
-
-        self.set_image("./cover_photo.jpg")
+        self.set_image(self.selected_folder+"/cover_photo.jpg")
 
     def update_eta_label(self):
         if hasattr(self, 'eta_label') and self.eta_label:
@@ -182,104 +183,70 @@ class ui_interface:
                     seconds_since_last_eta = (datetime.now() - self.eta_received_time).seconds
                     actual_eta = self.progress_eta - seconds_since_last_eta
                     eta_clock = utils.convert_sec_to_clock(actual_eta)
-
                 self.eta_label.configure(text="[{}<{}]".format(self.progress_elapsed, eta_clock))
 
     def update_seconds_elapsed(self):
         seconds_elapsed = (datetime.now() - self.time_start).seconds
         self.progress_elapsed = utils.convert_sec_to_clock(seconds_elapsed)
 
-    def calculate_progress(self, current, total):
-        return (current / total) * 100
-
-
-    def calculate_eta(self, eta):
-        self.eta_received_time = datetime.now()
-        self.progress_eta = eta
-
-    def handle_message(self, message):
-        contents = message["contents"]
-
-        if message["type"] == "progress":
-            progress = self.calculate_progress(current=contents[0], total=contents[1])
-            self.set_progress(progress)
-
-        elif message["type"] == "song_title":
-            self.progress_text = contents
-            self.update_song_label()
-
-        elif message["type"] == "eta_update":
-            self.calculate_eta(eta=contents[1])
-            self.update_eta_label()
-
     def start(self):
         self.time_start = datetime.now()
         link = self.playlist_link_entry.get()
-
         if DEBUGGING:
             link = DEBUGGING_LINK
-
         if self.downloader.validate_playlist_url(link):
-            self.running = True  # Set running to True here
-
-            # Set up the progress bar
+            self.running = True
             self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
             self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
-            self.progress_bar.set(0)  # Initialize the progress bar to 0
+            self.progress_bar.set(0)
             self.is_progress_visible = True
-
-            # Set up the Percentage Label
-            self.progress_label = ctk.CTkLabel(self.root, text="0%")  # Initialize the progress label to 0%
+            self.progress_label = ctk.CTkLabel(self.root, text="0%")
             self.progress_label.grid(column=0, row=1)
             self.is_eta_visible = True
-
-            # Set up the ETA Label
             self.eta_label = ctk.CTkLabel(self.root, text="")
             self.eta_label.grid(column=1, row=1)
             self.is_eta_visible = True
-
-            self.progress_percentage = 0  # Ensure progress percentage is set to 0
-            self.download = self.downloader.start_downloader(link)
+            self.progress_percentage = 0
+            self.downloader.start_downloader(link)
             self.update_progress_label()
             self.is_playlist_link_entry_visible = False
             self.is_eta_visible = True
             self.is_song_label_visible = True
             self.is_stop_button_visible = True
             self.is_folder_button_visible = False
-            self.is_download_button_visible = False  # Hide the download button
+            self.is_download_button_visible = False
             self.schedule_update()
         else:
-            showerror(message="Invalid Playlist Link")
+            showerror(message="Invalid Playlist URL")
         self.manage_visibility()
 
     def stop(self):
-        self.running = False  # Set running to False here
-
-        if hasattr(self, 'progress_bar') and self.progress_bar:
-            self.progress_bar.grid_remove()
-            self.is_progress_visible = False
-        if hasattr(self, 'progress_label') and self.progress_label:
+        self.downloader.cancel_downloader()
+        self.reset_values()
+        self.progress_bar.grid_remove()
+        self.progress_label.grid_remove()
+        self.progress_label.grid_remove()
+        self.is_eta_visible = False
+        if hasattr(self, 'eta_label') and self.eta_label:
             self.progress_label.grid_remove()
             self.is_eta_visible = False
         if hasattr(self, 'eta_label') and self.eta_label:
             self.eta_label.grid_remove()
+            self.song_label.configure(text="")
+            self.is_playlist_link_entry_visible = True
             self.is_eta_visible = False
-
-        self.progress_bar = None
-        self.progress_label = None
-        self.eta_label = None
-
-        self.is_eta_visible = False
-        self.is_song_label_visible = False
-        self.is_playlist_link_entry_visible = True
-        self.is_stop_button_visible = False
-        self.is_folder_button_visible = True
-        self.is_download_button_visible = True  # Show the download button again
-
-        self.root.geometry("320x150")
-        self.reset_values()
-        self.downloader.stop_downloader()
+            self.is_song_label_visible = False
+            self.is_stop_button_visible = False
+            self.is_folder_button_visible = True
+            self.is_download_button_visible = True
+            self.running = False
         self.manage_visibility()
+
+    def schedule_update(self):
+        if self.running:
+            self.update_progress()
+            self.root.after(1000, self.schedule_update)
+            self.manage_visibility()
 
     def manage_visibility(self):
         if hasattr(self, 'progress_bar') and self.progress_bar:
@@ -322,49 +289,22 @@ class ui_interface:
         else:
             self.start_button.grid_remove()
 
+    def update_progress(self):
+        # Query DownloadManager for progress
+        total = 1 if self.downloader.get_total() == 0 else self.downloader.get_total()
+        self.progress_percentage =  self.downloader.get_progress() / total * 100,
+        self.progress_text = self.downloader.get_current_song() or ""
+        self.progress_eta = self.downloader.get_eta() or 0
+
+        self.update_seconds_elapsed()
+        self.update_progress_label()
+        self.update_eta_label()
+        self.update_song_label()
+
     def folder(self):
-        given_folder = filedialog.askdirectory()
-        if not isinstance(given_folder, tuple):
-            self.selected_folder = given_folder
-
-        self.selected_folder += "/Songs"
-        self.downloader.set_directory(self.selected_folder)
-
-    def update_downloader_status(self):
-        progress = self.downloader.get_progress()
-        total = self.downloader.get_total()
-        current_song = self.downloader.get_current_song()
-        eta = self.downloader.get_eta()
-
-        if total is not None:
-            progress_percentage = self.calculate_progress(current=progress, total=total)
-            self.set_progress(progress_percentage)
-
-        if current_song is not None and self.prev_song != current_song:
-            self.prev_song = current_song
-            self.progress_text = current_song
-            self.update_song_label()
-
-            if eta is not None:
-                self.calculate_eta(eta)
-                self.update_eta_label()
-
-    def schedule_update(self):
-        if self.running:
-            if hasattr(self, 'progress_bar') and self.progress_bar:
-                self.update_downloader_status()
-                self.update_seconds_elapsed()
-                if hasattr(self, 'eta_label') and self.eta_label:
-                    self.update_eta_label()
-            self.manage_visibility()
-            self.root.after(100, self.schedule_update)
+        self.selected_folder = filedialog.askdirectory()
+        self.downloader.set_download_directory(self.selected_folder)
 
     def run(self):
-        self.schedule_update()
-        self.manage_visibility()
         self.root.mainloop()
-
-
-if __name__ == "__main__":
-    ui = ui_interface()
-    ui.run()
+        self.manage_visibility()
