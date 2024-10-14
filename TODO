@@ -1,0 +1,11 @@
+
+Todo:
+  ✔ Figure out dependence on package @done(24-10-14 17:26) The UI depends on the package and utils.py, the downloader has been removed
+  ✔ Fix issue on closing @done(24-10-14 17:53)
+  ☐ Establish if it works as intended, and if not, what songs are skipped
+  ✔ Add first time setup again @done(24-10-14 17:56)
+  ☐ Add a loading state
+  ☐ FIX Image remains after stoping
+  ☐ FIX input bar changes shape after stopping
+  ☐ Improve behaviour when changing screens
+

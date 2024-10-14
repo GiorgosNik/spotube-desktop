@@ -8,6 +8,8 @@ import os
 import customtkinter as ctk
 from tkinter import filedialog
 from spotube.download_manager import DownloadManager
+from spotube.dependency_handler import DependencyHandler
+from tkinter import TclError
 
 # Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 # Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
@@ -104,7 +106,7 @@ class ui_interface:
         self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky="w")
 
         # # Perform first time check
-        # self.first_time_setup_check()
+        self.first_time_setup_check()
 
         # Initialize DownloadManager
         self.downloader = DownloadManager(
@@ -122,18 +124,19 @@ class ui_interface:
 
     def on_close(self):
         self.running = False
+        self.root.withdraw()
         self.stop()
         self.root.destroy()
 
-    # def first_time_setup_check(self):
-    #     if not DependencyHandler.ffmpeg_installed():
-    #         if os.name == "nt":
-    #             message = "The ffmpeg utility is missing.\nInstalling now..."
-    #         elif os.name == "posix":
-    #             message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
-    #         showinfo(message=message)
-    #         if os.name == "nt":
-    #             DependencyHandler.download_ffmpeg(os_type=os.name)
+    def first_time_setup_check(self):
+        if  not DependencyHandler.ffmpeg_installed():
+            if os.name == "nt":
+                message = "The ffmpeg utility is missing.\nInstalling now..."
+            elif os.name == "posix":
+                message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
+            showinfo(message=message)
+            if os.name == "nt":
+                DependencyHandler.download_ffmpeg(os_type=os.name)
 
     def reset_values(self):
         self.progress_percentage = 0
@@ -223,14 +226,17 @@ class ui_interface:
     def stop(self):
         self.downloader.cancel_downloader()
         self.reset_values()
-        self.progress_bar.grid_remove()
-        self.progress_label.grid_remove()
-        self.progress_label.grid_remove()
+
+        if hasattr(self, 'progress_bar') and self.progress_bar:
+            self.progress_bar.grid_remove()
+
+        if hasattr(self, 'progress_label') and self.progress_label:
+            self.progress_label.grid_remove()
+
         self.is_eta_visible = False
         if hasattr(self, 'eta_label') and self.eta_label:
             self.progress_label.grid_remove()
             self.is_eta_visible = False
-        if hasattr(self, 'eta_label') and self.eta_label:
             self.eta_label.grid_remove()
             self.song_label.configure(text="")
             self.is_playlist_link_entry_visible = True
@@ -239,7 +245,9 @@ class ui_interface:
             self.is_stop_button_visible = False
             self.is_folder_button_visible = True
             self.is_download_button_visible = True
+            self.root.geometry("320x170")
             self.running = False
+
         self.manage_visibility()
 
     def schedule_update(self):
@@ -249,12 +257,26 @@ class ui_interface:
             self.manage_visibility()
 
     def manage_visibility(self):
+        try:
+            self.manage_progress_bar_visibility()
+            self.manage_progress_label_visibility()
+            self.manage_song_label_visibility()
+            self.manage_playlist_link_entry_visibility()
+            self.manage_stop_button_visibility()
+            self.manage_folder_button_visibility()
+            self.manage_download_button_visibility()
+        except TclError:
+            # Application has been destroyed; handle accordingly
+            pass
+
+    def manage_progress_bar_visibility(self):
         if hasattr(self, 'progress_bar') and self.progress_bar:
             if self.is_progress_visible:
                 self.progress_bar.grid()
             else:
                 self.progress_bar.grid_remove()
 
+    def manage_progress_label_visibility(self):
         if hasattr(self, 'progress_label') and self.progress_label:
             if self.is_eta_visible:
                 self.progress_label.grid()
@@ -263,27 +285,32 @@ class ui_interface:
                 self.progress_label.grid_remove()
                 self.eta_label.grid_remove()
 
+    def manage_song_label_visibility(self):
         if hasattr(self, 'song_label') and self.song_label:
             if self.is_song_label_visible:
                 self.song_label.grid()
             else:
                 self.song_label.grid_remove()
 
+    def manage_playlist_link_entry_visibility(self):
         if self.is_playlist_link_entry_visible:
             self.playlist_link_entry.grid()
         else:
             self.playlist_link_entry.grid_remove()
 
+    def manage_stop_button_visibility(self):
         if self.is_stop_button_visible:
             self.stop_button.grid()
         else:
             self.stop_button.grid_remove()
 
+    def manage_folder_button_visibility(self):
         if self.is_folder_button_visible:
             self.folder_button.grid()
         else:
             self.folder_button.grid_remove()
 
+    def manage_download_button_visibility(self):
         if self.is_download_button_visible:
             self.start_button.grid()
         else:

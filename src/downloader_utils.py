@@ -124,7 +124,7 @@ def download_song(given_link, song_info, downloader, directory=DEFAULT_DIR):
             os.rename(latest_file, directory + "/" + song_info["name"] + ".mp3")
             return
 
-        except Exception as e:
+        except Exception:
             attempts += 1
             continue
 
