@@ -7,9 +7,11 @@ Todo:
   ✔ FIX input bar changes shape after stopping @done(24-10-14 18:38)
   ✔ Improve behaviour when changing screens @done(24-10-14 19:04)
   ✔ Remove utils we do not need @done(24-10-15 10:36)
+  ✔ Improve stop behaviour to become non-blocking @done(24-10-15 11:00)
+  ✔ Fix crash after restarting download @done(24-10-15 11:00)
   ☐ Establish if it works as intended, and if not, what songs are skipped
-  ☐ Add a loading state
   ☐ Move color and other settings to different files
-  ☐ Improve stop behaviour to become non-blocking
-  ☐ Fix crash after restarting download
   ☐ Remove vertical line from input bar
+  ☐ Set methods as private
+  ☐ Add logging to package
+  ☐ Stop removal of directory from package

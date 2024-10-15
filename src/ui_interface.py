@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from datetime import datetime
 from tkinter.messagebox import showinfo, showerror
@@ -231,7 +232,18 @@ class ui_interface:
         self.manage_visibility()
 
     def stop(self):
-        self.downloader.cancel_downloader()
+        # Stop the downloader in a thread
+        stop_thread = threading.Thread(target=self.downloader.cancel_downloader, daemon=True)
+        stop_thread.start()
+
+        # Initialize new DownloadManager
+        self.downloader = DownloadManager(
+            spotify_client_id=SPOTIFY_ID,
+            spotify_client_secret=SPOTIFY_SECRET,
+            genius_api_key=GENIUS_TOKEN,
+            directory=self.selected_folder
+        )
+
         self.reset_values()
 
         if hasattr(self, 'progress_bar') and self.progress_bar:
@@ -256,6 +268,8 @@ class ui_interface:
             self.running = False
 
         self.manage_visibility()
+        self.stop_thread.join()
+
 
     def schedule_update(self):
         if self.running:
