@@ -59,6 +59,7 @@ class ui_interface:
         self.is_playlist_link_entry_visible = True
         self.is_stop_button_visible = False
         self.is_folder_button_visible = True
+        self.stop_thread = None
 
         # Disable resizing the window
         self.root.resizable(False, False)
@@ -129,6 +130,7 @@ class ui_interface:
 
         # Bind the close event to handle proper shutdown
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.manage_visibility()
 
     def on_close(self):
         self.running = False
@@ -205,6 +207,10 @@ class ui_interface:
         link = self.playlist_link_entry.get()
         if DEBUGGING:
             link = DEBUGGING_LINK
+
+        # Wait for previous download to exit
+        self.reset_stop_thread()
+
         if self.downloader.validate_playlist_url(link):
             self.running = True
             self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
@@ -233,16 +239,8 @@ class ui_interface:
 
     def stop(self):
         # Stop the downloader in a thread
-        stop_thread = threading.Thread(target=self.downloader.cancel_downloader, daemon=True)
-        stop_thread.start()
-
-        # Initialize new DownloadManager
-        self.downloader = DownloadManager(
-            spotify_client_id=SPOTIFY_ID,
-            spotify_client_secret=SPOTIFY_SECRET,
-            genius_api_key=GENIUS_TOKEN,
-            directory=self.selected_folder
-        )
+        self.stop_thread = threading.Thread(target=self.downloader.cancel_downloader, daemon=True)
+        self.stop_thread.start()
 
         self.reset_values()
 
@@ -268,8 +266,6 @@ class ui_interface:
             self.running = False
 
         self.manage_visibility()
-        self.stop_thread.join()
-
 
     def schedule_update(self):
         if self.running:
@@ -337,11 +333,17 @@ class ui_interface:
         else:
             self.start_button.grid_remove()
 
+    def reset_stop_thread(self):
+        if self.stop_thread is not None:
+            self.stop_thread.join()
+            self.stop_thread = None
+
     def update_progress(self):
         # Get total number of songs; avoid division by 0
         total = 1 if self.downloader.get_total() == 0 else self.downloader.get_total()
 
         # Get current progress as a percentage
+        total = total if total is not None else 1
         self.progress_percentage = self.downloader.get_progress() / total * 100
 
         # Get the current song name
@@ -358,7 +360,6 @@ class ui_interface:
 
         # Update the progress bar
         self.progress_bar.set(self.progress_percentage / 100)
-
 
     def folder(self):
         self.selected_folder = filedialog.askdirectory()
