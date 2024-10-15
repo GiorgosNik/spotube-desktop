@@ -2,10 +2,14 @@
 Todo:
   ✔ Figure out dependence on package @done(24-10-14 17:26) The UI depends on the package and utils.py, the downloader has been removed
   ✔ Fix issue on closing @done(24-10-14 17:53)
-  ☐ Establish if it works as intended, and if not, what songs are skipped
   ✔ Add first time setup again @done(24-10-14 17:56)
+  ✔ FIX Image remains after stoping @done(24-10-14 18:38)
+  ✔ FIX input bar changes shape after stopping @done(24-10-14 18:38)
+  ✔ Improve behaviour when changing screens @done(24-10-14 19:04)
+  ✔ Remove utils we do not need @done(24-10-15 10:36)
+  ☐ Establish if it works as intended, and if not, what songs are skipped
   ☐ Add a loading state
-  ☐ FIX Image remains after stoping
-  ☐ FIX input bar changes shape after stopping
-  ☐ Improve behaviour when changing screens
-
+  ☐ Move color and other settings to different files
+  ☐ Improve stop behaviour to become non-blocking
+  ☐ Fix crash after restarting download
+  ☐ Remove vertical line from input bar

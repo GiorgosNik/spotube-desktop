@@ -11,6 +11,13 @@ from spotube.download_manager import DownloadManager
 from spotube.dependency_handler import DependencyHandler
 from tkinter import TclError
 
+# Fix for high DPI displays
+try:
+    from ctypes import windll
+    windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    pass
+
 # Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
 # Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
 # Big Playlist = https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949
@@ -229,13 +236,13 @@ class ui_interface:
 
         if hasattr(self, 'progress_bar') and self.progress_bar:
             self.progress_bar.grid_remove()
+            self.is_progress_visible = False
 
         if hasattr(self, 'progress_label') and self.progress_label:
             self.progress_label.grid_remove()
 
         self.is_eta_visible = False
         if hasattr(self, 'eta_label') and self.eta_label:
-            self.progress_label.grid_remove()
             self.is_eta_visible = False
             self.eta_label.grid_remove()
             self.song_label.configure(text="")
@@ -317,16 +324,27 @@ class ui_interface:
             self.start_button.grid_remove()
 
     def update_progress(self):
-        # Query DownloadManager for progress
+        # Get total number of songs; avoid division by 0
         total = 1 if self.downloader.get_total() == 0 else self.downloader.get_total()
-        self.progress_percentage =  self.downloader.get_progress() / total * 100,
+
+        # Get current progress as a percentage
+        self.progress_percentage = self.downloader.get_progress() / total * 100
+
+        # Get the current song name
         self.progress_text = self.downloader.get_current_song() or ""
+
+        # Get the estimated time of arrival (ETA)
         self.progress_eta = self.downloader.get_eta() or 0
 
+        # Update the elapsed time and labels
         self.update_seconds_elapsed()
         self.update_progress_label()
         self.update_eta_label()
         self.update_song_label()
+
+        # Update the progress bar
+        self.progress_bar.set(self.progress_percentage / 100)
+
 
     def folder(self):
         self.selected_folder = filedialog.askdirectory()

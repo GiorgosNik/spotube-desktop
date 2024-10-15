@@ -1,4 +1,4 @@
-from src.downloader_class import downloader
+from spotube.download_manager import DownloadManager
 from tkinter.constants import W
 import os
 import sys
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         os.mkdir(dir)
 
     # Create downloader object
-    downloader_object = downloader(SPOTIFY_ID, SPOTIFY_SECRET, GENIUS_TOKEN, dir)
+    downloader_object = DownloadManager(SPOTIFY_ID, SPOTIFY_SECRET, GENIUS_TOKEN, dir)
 
     # Perform first time checks
     first_time_setup_check(downloader_object)
