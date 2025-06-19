@@ -147,3 +147,4 @@ sonar-project.properties
 cover_photo.jpg
 *.webm*
 ffplay.exe
+.vars

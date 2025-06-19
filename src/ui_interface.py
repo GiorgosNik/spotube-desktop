@@ -11,6 +11,7 @@ from tkinter import filedialog
 from spotube.download_manager import DownloadManager
 from spotube.dependency_handler import DependencyHandler
 from tkinter import TclError
+from dotenv import load_dotenv
 
 # Fix for high DPI displays
 try:
@@ -19,19 +20,16 @@ try:
 except Exception:
     pass
 
-# Small Playlist = "https://open.spotify.com/playlist/1jgaUl1FGzK76PPEn6i43f?si=f5b622467318460d"
-# Big Title Playlist = "https://open.spotify.com/playlist/3zdqcFFsbURZ1y8oFbEELc?si=1a7c2641ae08404b"
-# Big Playlist = https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949
-# Big Rap Playlist = "https://open.spotify.com/playlist/2j71FgBAzmOjogzpmrf4lG?si=a92af70484fd4b3d"
+load_dotenv("./.vars")
 
 # Debugging Settings
 DEBUGGING = False
-DEBUGGING_LINK = "https://open.spotify.com/playlist/05MWSPxUUWA0d238WFvkKA?si=d663213356a64949"
+DEBUGGING_LINK = os.getenv("DEBUGGING_LINK", )
 
 # Credentials and API Keys
-SPOTIFY_ID = "ff55dcadd44e4cb0819ebe5be80ab687"
-SPOTIFY_SECRET = "5539f7392ae94dd5b3dfc1d57381303a"
-GENIUS_TOKEN = "5dRV7gMtFLgnlF632ZzqZutSsvPC0IWyFUJ1W8pWHj185RAMFgR4FtX76ckFDjFZ"
+SPOTIFY_ID = os.getenv("SPOTIFY_ID")
+SPOTIFY_SECRET = os.getenv
+GENIUS_TOKEN = os.getenv("GENIUS_TOKEN")
 
 # Global Settings
 MAX_SONG_NAME_LEN = 40
@@ -270,7 +268,7 @@ class ui_interface:
     def schedule_update(self):
         if self.running:
             self.update_progress()
-            self.root.after(1000, self.schedule_update)
+            self.root.after(500, self.schedule_update)
             self.manage_visibility()
 
     def manage_visibility(self):
@@ -283,7 +281,6 @@ class ui_interface:
             self.manage_folder_button_visibility()
             self.manage_download_button_visibility()
         except TclError:
-            # Application has been destroyed; handle accordingly
             pass
 
     def manage_progress_bar_visibility(self):
@@ -340,17 +337,18 @@ class ui_interface:
 
     def update_progress(self):
         # Get total number of songs; avoid division by 0
-        total = 1 if self.downloader.get_total() == 0 else self.downloader.get_total()
+        total = 1 if self.downloader.total == 0 else self.downloader.total
 
         # Get current progress as a percentage
         total = total if total is not None else 1
-        self.progress_percentage = self.downloader.get_progress() / total * 100
+        self.progress_percentage = self.downloader.progress / total * 100
 
         # Get the current song name
-        self.progress_text = self.downloader.get_current_song() or ""
+        self.progress_text = self.downloader.current_song or ""
 
         # Get the estimated time of arrival (ETA)
-        self.progress_eta = self.downloader.get_eta() or 0
+        self.progress_eta = self.downloader.eta or 0
+        self.eta_received_time = datetime.now()
 
         # Update the elapsed time and labels
         self.update_seconds_elapsed()
