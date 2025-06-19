@@ -28,7 +28,7 @@ DEBUGGING_LINK = os.getenv("DEBUGGING_LINK", )
 
 # Credentials and API Keys
 SPOTIFY_ID = os.getenv("SPOTIFY_ID")
-SPOTIFY_SECRET = os.getenv
+SPOTIFY_SECRET = os.getenv("SPOTIFY_SECRET")
 GENIUS_TOKEN = os.getenv("GENIUS_TOKEN")
 
 # Global Settings
@@ -336,28 +336,32 @@ class ui_interface:
             self.stop_thread = None
 
     def update_progress(self):
-        # Get total number of songs; avoid division by 0
-        total = 1 if self.downloader.total == 0 else self.downloader.total
+        if self.downloader.normalizing:
+            self.progress_text = "Normalizing: {} songs".format(self.downloader.normalized_songs)
+            self.progress_percentage = (self.downloader.normalized_songs / self.downloader.total) * 100 if self.downloader.total > 0 else 0
+        elif self.downloader.working:
+            # Get total number of songs; avoid division by 0
+            total = 1 if self.downloader.total == 0 else self.downloader.total
 
-        # Get current progress as a percentage
-        total = total if total is not None else 1
-        self.progress_percentage = self.downloader.progress / total * 100
+            # Get current progress as a percentage
+            total = total if total is not None else 1
+            self.progress_percentage = self.downloader.progress / total * 100
 
-        # Get the current song name
-        self.progress_text = self.downloader.current_song or ""
+            # Get the current song name
+            self.progress_text = self.downloader.current_song or ""
 
-        # Get the estimated time of arrival (ETA)
-        self.progress_eta = self.downloader.eta or 0
-        self.eta_received_time = datetime.now()
+            # Get the estimated time of arrival (ETA)
+            self.progress_eta = self.downloader.eta or 0
+            self.eta_received_time = datetime.now()
 
-        # Update the elapsed time and labels
-        self.update_seconds_elapsed()
-        self.update_progress_label()
-        self.update_eta_label()
-        self.update_song_label()
+            # Update the elapsed time and labels
+            self.update_seconds_elapsed()
+            self.update_progress_label()
+            self.update_eta_label()
+            self.update_song_label()
 
-        # Update the progress bar
-        self.progress_bar.set(self.progress_percentage / 100)
+            # Update the progress bar
+            self.progress_bar.set(self.progress_percentage / 100)
 
     def folder(self):
         self.selected_folder = filedialog.askdirectory()
