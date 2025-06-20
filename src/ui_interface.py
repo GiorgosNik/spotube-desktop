@@ -12,6 +12,7 @@ from spotube.download_manager import DownloadManager
 from spotube.dependency_handler import DependencyHandler
 from tkinter import TclError
 from dotenv import load_dotenv
+from CTkMessagebox import CTkMessagebox
 
 # Fix for high DPI displays
 try:
@@ -143,6 +144,11 @@ class ui_interface:
             elif os.name == "posix":
                 message =  "The ffmpeg utility is missing.\nTo Fix this:\n1)Install ffmpeg by running:\n\n     $sudo apt-get install ffmpeg      \n\n 2) Restart the program"
             showinfo(message=message)
+            CTkMessagebox(
+                title="Missing Dependencies",
+                message=message,
+                icon="info",
+            ).get()
             if os.name == "nt":
                 DependencyHandler.download_ffmpeg(os_type=os.name)
 
@@ -160,27 +166,18 @@ class ui_interface:
         self.label.grid(column=5, row=0, columnspan=3, rowspan=4, padx=10)
         self.label.image = cover_art_element
 
-    def set_progress(self, value):
-        self.progress_bar.set(value / 100)
-        self.progress_percentage = value
-        self.update_progress_label()
-        if value >= 100:
-            showinfo(message="Download Complete")
-            self.progress_bar.set(0)
-            self.stop()
-            self.playlist_link_entry.delete(0, tk.END)
-            self.playlist_link_entry.insert(0, "")
-            utils.on_focus_out(self.playlist_link_entry, PLAYLIST_URL_ENTRY_PLACEHOLDER)
-
-    def update_progress_label(self):
+    def update_percentage_label(self):
         percentage = "%.1f" % self.progress_percentage
-        self.progress_label.configure(text="{}%".format(percentage))
-
-    def update_song_label(self):
+        self.percentage_label.configure(text="{}%".format(percentage))
+        
+    def update_song_label_text(self):
+        self.song_label.configure(text=self.progress_text)
+        
+    def update_song_info(self):
         self.root.geometry("480x150")
         if len(self.progress_text) > MAX_SONG_NAME_LEN:
             self.progress_text = self.progress_text[:MAX_SONG_NAME_LEN] + "..."
-        self.song_label.configure(text=self.progress_text)
+        self.update_song_label_text()
         while not os.path.exists(self.selected_folder+"/cover_photo.jpg"):
             sleep(0.1)
         self.set_image(self.selected_folder+"/cover_photo.jpg")
@@ -215,15 +212,15 @@ class ui_interface:
             self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
             self.progress_bar.set(0)
             self.is_progress_visible = True
-            self.progress_label = ctk.CTkLabel(self.root, text="0%")
-            self.progress_label.grid(column=0, row=1)
+            self.percentage_label = ctk.CTkLabel(self.root, text="0%")
+            self.percentage_label.grid(column=0, row=1)
             self.is_eta_visible = True
             self.eta_label = ctk.CTkLabel(self.root, text="")
             self.eta_label.grid(column=1, row=1)
             self.is_eta_visible = True
             self.progress_percentage = 0
             self.downloader.start_downloader(link)
-            self.update_progress_label()
+            self.update_percentage_label()
             self.is_playlist_link_entry_visible = False
             self.is_eta_visible = True
             self.is_song_label_visible = True
@@ -232,7 +229,11 @@ class ui_interface:
             self.is_download_button_visible = False
             self.schedule_update()
         else:
-            showerror(message="Invalid Playlist URL")
+            CTkMessagebox(
+                title="Invalid Playlist URL",
+                message="Invalid Playlist URL, please check the URL and try again.",
+                icon="cancel",
+            ).get()
         self.manage_visibility()
 
     def stop(self):
@@ -242,26 +243,18 @@ class ui_interface:
 
         self.reset_values()
 
-        if hasattr(self, 'progress_bar') and self.progress_bar:
-            self.progress_bar.grid_remove()
-            self.is_progress_visible = False
-
-        if hasattr(self, 'progress_label') and self.progress_label:
-            self.progress_label.grid_remove()
-
+        self.is_progress_visible = False
+        self.eta_label.grid_remove()
+        self.song_label.configure(text="")
+        self.is_playlist_link_entry_visible = True
         self.is_eta_visible = False
-        if hasattr(self, 'eta_label') and self.eta_label:
-            self.is_eta_visible = False
-            self.eta_label.grid_remove()
-            self.song_label.configure(text="")
-            self.is_playlist_link_entry_visible = True
-            self.is_eta_visible = False
-            self.is_song_label_visible = False
-            self.is_stop_button_visible = False
-            self.is_folder_button_visible = True
-            self.is_download_button_visible = True
-            self.root.geometry("320x170")
-            self.running = False
+        self.is_song_label_visible = False
+        self.is_stop_button_visible = False
+        self.is_folder_button_visible = True
+        self.is_download_button_visible = True
+        
+        self.root.geometry("320x170")
+        self.running = False
 
         self.manage_visibility()
 
@@ -291,12 +284,12 @@ class ui_interface:
                 self.progress_bar.grid_remove()
 
     def manage_progress_label_visibility(self):
-        if hasattr(self, 'progress_label') and self.progress_label:
+        if hasattr(self, 'percentage_label') and self.percentage_label:
             if self.is_eta_visible:
-                self.progress_label.grid()
+                self.percentage_label.grid()
                 self.eta_label.grid()
             else:
-                self.progress_label.grid_remove()
+                self.percentage_label.grid_remove()
                 self.eta_label.grid_remove()
 
     def manage_song_label_visibility(self):
@@ -337,8 +330,12 @@ class ui_interface:
 
     def update_progress(self):
         if self.downloader.normalizing:
-            self.progress_text = "Normalizing: {} songs".format(self.downloader.normalized_songs)
+            self.root.geometry("320x170")
+            self.progress_text = "Normalizing song {} of {} songs".format(self.downloader.normalized_songs, self.downloader.total)
             self.progress_percentage = (self.downloader.normalized_songs / self.downloader.total) * 100 if self.downloader.total > 0 else 0
+            self.progress_bar.set(self.progress_percentage / 100)
+            self.update_percentage_label()
+            self.update_song_label_text()
         elif self.downloader.working:
             # Get total number of songs; avoid division by 0
             total = 1 if self.downloader.total == 0 else self.downloader.total
@@ -356,12 +353,41 @@ class ui_interface:
 
             # Update the elapsed time and labels
             self.update_seconds_elapsed()
-            self.update_progress_label()
+            self.update_percentage_label()
             self.update_eta_label()
-            self.update_song_label()
+            self.update_song_info()
 
             # Update the progress bar
             self.progress_bar.set(self.progress_percentage / 100)
+        if self.downloader.normalizing and self.downloader.normalized_songs == self.downloader.total:
+            message = (f"Download Complete!\n\n"
+            f"Downloaded {self.downloader.success_counter} songs\n"
+            f"Failed to download {self.downloader.fail_counter} songs\n")
+        
+            option = CTkMessagebox(
+                title="Operation Completed",
+                message=message,
+                icon="check",
+                option_1="OK",
+                option_2="Open Directory",
+                width=500
+            ).get()
+            
+            if option == "Open Directory":
+                self.open_output_directory()
+            
+            self.stop()
+            
+    def open_output_directory(self):
+        # Open the directory in the file explorer
+        if os.name == "nt":  # Windows
+            os.startfile(self.selected_folder)
+        elif os.name == "posix":  # macOS/Linux
+            subprocess.Popen(
+                ["open", self.selected_folder]
+                if "darwin" in os.sys.platform
+                else ["xdg-open", self.selected_folder]
+            )            
 
     def folder(self):
         self.selected_folder = filedialog.askdirectory()
