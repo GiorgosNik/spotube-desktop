@@ -123,6 +123,10 @@ class ui_interface:
             genius_api_key=GENIUS_TOKEN,
             directory=self.selected_folder
         )
+        
+        self.eta_label = ctk.CTkLabel(self.root, text="")
+        self.eta_label.grid(column=1, row=1)
+        self.eta_label.grid_remove()
 
         # Flag to indicate if the application is running
         self.running = True
@@ -215,14 +219,10 @@ class ui_interface:
             self.percentage_label = ctk.CTkLabel(self.root, text="0%")
             self.percentage_label.grid(column=0, row=1)
             self.is_eta_visible = True
-            self.eta_label = ctk.CTkLabel(self.root, text="")
-            self.eta_label.grid(column=1, row=1)
-            self.is_eta_visible = True
             self.progress_percentage = 0
             self.downloader.start_downloader(link)
             self.update_percentage_label()
             self.is_playlist_link_entry_visible = False
-            self.is_eta_visible = True
             self.is_song_label_visible = True
             self.is_stop_button_visible = True
             self.is_folder_button_visible = False

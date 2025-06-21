@@ -16,6 +16,7 @@ Todo:
   ✔ Remove API keys @done(25-06-18 12:00)
   ✔ Remove percentage label from UI on reset @done(25-06-20 16:18)
   ✔ Get abspath when opening folder after successful download @done(25-06-21 15:52)
+  ✔ Add graceful shutdown on close @done(25-06-21 17:08)
   ☐ Add options to UI
   ☐ Add API keys to release
   ☐ Add conditional termination if normalization is not selected
