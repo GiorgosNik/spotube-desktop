@@ -380,13 +380,14 @@ class ui_interface:
             
     def open_output_directory(self):
         # Open the directory in the file explorer
+        directory = os.path.abspath(self.selected_folder)
         if os.name == "nt":  # Windows
-            os.startfile(self.selected_folder)
+            os.startfile(directory)
         elif os.name == "posix":  # macOS/Linux
             subprocess.Popen(
-                ["open", self.selected_folder]
+                ["open", directory]
                 if "darwin" in os.sys.platform
-                else ["xdg-open", self.selected_folder]
+                else ["xdg-open", directory]
             )            
 
     def folder(self):

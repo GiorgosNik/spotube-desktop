@@ -13,9 +13,9 @@ Todo:
   ✔ Add logging to package @done(24-10-15 18:03)
   ✔ Fix ETA calculation
   ✔ Report normalization progress @done(25-06-20 16:02)
-  ☐ Add options to UI
   ✔ Remove API keys @done(25-06-18 12:00)
   ✔ Remove percentage label from UI on reset @done(25-06-20 16:18)
+  ✔ Get abspath when opening folder after successful download @done(25-06-21 15:52)
+  ☐ Add options to UI
   ☐ Add API keys to release
   ☐ Add conditional termination if normalization is not selected
-  ☐ Get abspath when opening folder after successful download
