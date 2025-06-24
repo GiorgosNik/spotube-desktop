@@ -1,6 +1,7 @@
 import threading
 import tkinter as tk
 from datetime import datetime
+import tkinter
 from tkinter.messagebox import showinfo, showerror
 import src.utils as utils
 from PIL import Image
@@ -74,8 +75,8 @@ class ui_interface:
         self.selected_folder = "./Songs"
 
         # Playlist URL input
-        self.playlist_link_entry = ctk.CTkEntry(self.root, width=250, placeholder_text=PLAYLIST_URL_ENTRY_PLACEHOLDER, font=FONT)
-        self.playlist_link_entry.grid(column=0, row=1, columnspan=2, rowspan=2, padx=10, pady=10)
+        self.playlist_link_entry = ctk.CTkEntry(self.root, width=300, placeholder_text=PLAYLIST_URL_ENTRY_PLACEHOLDER, font=FONT)
+        self.playlist_link_entry.grid(column=0, row=0, columnspan=2, rowspan=2, padx=10, pady=10)
 
         # Set Playlist Placeholder URL
         self.playlist_link_entry.configure(state="normal")
@@ -96,9 +97,9 @@ class ui_interface:
         # Start Button
         self.start_button = ctk.CTkButton(
             self.root, text="Download", command=self.start, fg_color=ACCENT_COLOR, 
-            text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
+            text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT, width=300
         )
-        self.start_button.grid(column=0, row=3, padx=10, pady=10, sticky="e")
+        self.start_button.grid(column=0, columnspan=2, row=3, padx=10, pady=10, sticky="e")
 
         self.stop_button = ctk.CTkButton(
             self.root, text="Stop", command=self.stop, fg_color=ACCENT_COLOR, 
@@ -108,10 +109,10 @@ class ui_interface:
         self.stop_button.grid_remove()
 
         self.folder_button = ctk.CTkButton(
-            self.root, text="Folder", command=self.folder, fg_color=ACCENT_COLOR, 
+            self.root, text="📁 Select Folder", command=self.folder, fg_color=ACCENT_COLOR, 
             text_color=TEXT_COLOR, hover_color=HOVER_COLOR, font=FONT
         )
-        self.folder_button.grid(column=1, row=3, padx=10, pady=10, sticky="w")
+        self.folder_button.grid(column=1, row=2, padx=10, pady=10, sticky="w")
 
         # # Perform first time check
         self.first_time_setup_check()
@@ -121,9 +122,23 @@ class ui_interface:
             spotify_client_id=SPOTIFY_ID,
             spotify_client_secret=SPOTIFY_SECRET,
             genius_api_key=GENIUS_TOKEN,
-            directory=self.selected_folder
+            directory=self.selected_folder,
         )
-        
+
+        self.normalize_audio_checkbox = ctk.CTkCheckBox(
+            self.root,
+            text="Normalize Sound",
+            hover_color=HOVER_COLOR,
+            fg_color=ACCENT_COLOR,
+            command=lambda: setattr(
+                self.downloader, "normalize_sound", self.normalize_audio_checkbox.get()
+            ),
+        )
+        self.normalize_audio_checkbox.grid(
+            column=0, row=2, padx=10, pady=10, sticky="e"
+        )
+        self.normalize_audio_checkbox.select()
+
         self.eta_label = ctk.CTkLabel(self.root, text="")
         self.eta_label.grid(column=1, row=1)
         self.eta_label.grid_remove()
@@ -173,10 +188,10 @@ class ui_interface:
     def update_percentage_label(self):
         percentage = "%.1f" % self.progress_percentage
         self.percentage_label.configure(text="{}%".format(percentage))
-        
+
     def update_song_label_text(self):
         self.song_label.configure(text=self.progress_text)
-        
+
     def update_song_info(self):
         self.root.geometry("480x150")
         if len(self.progress_text) > MAX_SONG_NAME_LEN:
@@ -209,10 +224,9 @@ class ui_interface:
 
         # Wait for previous download to exit
         self.reset_stop_thread()
-
         if self.downloader.validate_playlist_url(link):
             self.running = True
-            self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300)
+            self.progress_bar = ctk.CTkProgressBar(self.root, orientation="horizontal", mode="determinate", width=300, progress_color=HOVER_COLOR)
             self.progress_bar.grid(column=0, row=0, columnspan=2, padx=10, pady=13)
             self.progress_bar.set(0)
             self.is_progress_visible = True
@@ -252,7 +266,7 @@ class ui_interface:
         self.is_stop_button_visible = False
         self.is_folder_button_visible = True
         self.is_download_button_visible = True
-        
+
         self.root.geometry("320x170")
         self.running = False
 
@@ -302,8 +316,10 @@ class ui_interface:
     def manage_playlist_link_entry_visibility(self):
         if self.is_playlist_link_entry_visible:
             self.playlist_link_entry.grid()
+            self.normalize_audio_checkbox.grid()
         else:
             self.playlist_link_entry.grid_remove()
+            self.normalize_audio_checkbox.grid_remove()
 
     def manage_stop_button_visibility(self):
         if self.is_stop_button_visible:
@@ -331,7 +347,7 @@ class ui_interface:
     def update_progress(self):
         if self.downloader.normalizing:
             self.root.geometry("320x170")
-            self.progress_text = "Normalizing song {} of {} songs".format(self.downloader.normalized_songs, self.downloader.total)
+            self.progress_text = "Normalizing volume for song #{} of {} songs".format(self.downloader.normalized_songs + 1 , self.downloader.total)
             self.progress_percentage = (self.downloader.normalized_songs / self.downloader.total) * 100 if self.downloader.total > 0 else 0
             self.progress_bar.set(self.progress_percentage / 100)
             self.update_percentage_label()
@@ -359,25 +375,35 @@ class ui_interface:
 
             # Update the progress bar
             self.progress_bar.set(self.progress_percentage / 100)
-        if self.downloader.normalizing and self.downloader.normalized_songs == self.downloader.total:
+
+        if (
+            self.downloader.normalize_sound
+            and self.downloader.normalized_songs == self.downloader.total
+        ) or (
+            not self.downloader.normalize_sound
+            and not self.downloader.working
+            and self.downloader.progress == self.downloader.total
+        ):
             message = (f"Download Complete!\n\n"
             f"Downloaded {self.downloader.success_counter} songs\n"
             f"Failed to download {self.downloader.fail_counter} songs\n")
-        
+
             option = CTkMessagebox(
                 title="Operation Completed",
                 message=message,
                 icon="check",
                 option_1="OK",
                 option_2="Open Directory",
-                width=500
+                width=500,
+                button_color=ACCENT_COLOR,
+                button_hover_color=HOVER_COLOR,
             ).get()
-            
+
             if option == "Open Directory":
                 self.open_output_directory()
-            
+
             self.stop()
-            
+
     def open_output_directory(self):
         # Open the directory in the file explorer
         directory = os.path.abspath(self.selected_folder)
@@ -392,7 +418,7 @@ class ui_interface:
 
     def folder(self):
         self.selected_folder = filedialog.askdirectory()
-        self.downloader.set_download_directory(self.selected_folder)
+        self.downloader.set_directory(self.selected_folder)
 
     def run(self):
         self.root.mainloop()

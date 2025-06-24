@@ -17,6 +17,9 @@ Todo:
   ✔ Remove percentage label from UI on reset @done(25-06-20 16:18)
   ✔ Get abspath when opening folder after successful download @done(25-06-21 15:52)
   ✔ Add graceful shutdown on close @done(25-06-21 17:08)
-  ☐ Add options to UI
+  ✔ Add options to UI @done(25-06-22 13:20)
+  ✔ Add conditional termination if normalization is not selected @done(25-06-24 21:35)
+  ☐ Fetch new package version to fix progress
+  ☐ Fix reset when complete
   ☐ Add API keys to release
-  ☐ Add conditional termination if normalization is not selected
+  ☐ Update ETA for normalization
