@@ -19,7 +19,8 @@ Todo:
   ✔ Add graceful shutdown on close @done(25-06-21 17:08)
   ✔ Add options to UI @done(25-06-22 13:20)
   ✔ Add conditional termination if normalization is not selected @done(25-06-24 21:35)
-  ☐ Fetch new package version to fix progress
+  ✔ Fix error in image resize (see image attached) @done(25-06-26 08:43)
+  ✔ Fetch new package version to fix progress @done(25-06-26 08:43)
   ☐ Fix reset when complete
   ☐ Add API keys to release
   ☐ Update ETA for normalization
