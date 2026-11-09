@@ -1,0 +1,26 @@
+
+Todo:
+  ✔ Figure out dependence on package @done(24-10-14 17:26) The UI depends on the package and utils.py, the downloader has been removed
+  ✔ Fix issue on closing @done(24-10-14 17:53)
+  ✔ Add first time setup again @done(24-10-14 17:56)
+  ✔ FIX Image remains after stoping @done(24-10-14 18:38)
+  ✔ FIX input bar changes shape after stopping @done(24-10-14 18:38)
+  ✔ Improve behaviour when changing screens @done(24-10-14 19:04)
+  ✔ Remove utils we do not need @done(24-10-15 10:36)
+  ✔ Improve stop behaviour to become non-blocking @done(24-10-15 11:00)
+  ✔ Fix crash after restarting download @done(24-10-15 11:00)
+  ✔ Remove vertical line from input bar @done(24-10-15 11:58)
+  ✔ Add logging to package @done(24-10-15 18:03)
+  ✔ Fix ETA calculation
+  ✔ Report normalization progress @done(25-06-20 16:02)
+  ✔ Remove API keys @done(25-06-18 12:00)
+  ✔ Remove percentage label from UI on reset @done(25-06-20 16:18)
+  ✔ Get abspath when opening folder after successful download @done(25-06-21 15:52)
+  ✔ Add graceful shutdown on close @done(25-06-21 17:08)
+  ✔ Add options to UI @done(25-06-22 13:20)
+  ✔ Add conditional termination if normalization is not selected @done(25-06-24 21:35)
+  ✔ Fix error in image resize (see image attached) @done(25-06-26 08:43)
+  ✔ Fetch new package version to fix progress @done(25-06-26 08:43)
+  ☐ Fix reset when complete
+  ☐ Add API keys to release
+  ☐ Update ETA for normalization

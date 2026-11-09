@@ -1,0 +1,6 @@
+DEBUGGING_LINK =
+
+# Optional keys: copy this file to .vars and fill in only what you have
+SPOTIFY_ID =
+SPOTIFY_SECRET =
+GENIUS_TOKEN =

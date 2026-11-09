@@ -1,86 +1,85 @@
 # Spotube
 
-Spotube is a Python application that allows the user to download local `.mp3` copies of Spotify playlists, including cover art, artist information and lyrics.
-
-## Description
-
-The application can be used either as a [UI based application](#ui-version) or as a [command line tool](#cli-version).
-In either case, the general principles of the application remain the same:\
-The user provides the link to a public spotify playlist, and, optionally the directory to save the downloaded songs.
-The application will then:
-
-- Query the Spotify API for information on each song in the playlist, including the official name, artists, album cover art etc.
-- Using the song name and artist(s), search for, and select the most relevant song video on Youtube. If possible, the application will avoid remixes, covers and video clip versions.
-- Using the most relevant link, download the video in the highest possible quality, and convert to .mp3 format.
-- Query the LyricsGenius API to retrieve the song lyrics, if available.
-- Edit the .mp3 tags of the downloaded song to set the artist and album information, add the lyrics and set the cover art.
-
-## Installation
-
-To set up the application, follow these steps:
-
-- Download the project files
-- Install the required Python dependencies by running:
-  ```
-  pip install -r requirements.txt
-  ```
-- Install ffmpeg: This step differs based on your operating system:
-  - For Windows systems, the ffmpeg executable is included in the project files. When first launching the app the executable will be extracted to the project`s root directory.
-  - Unix users will need to install ffmpeg through the console. For example, in Ubuntu run:
-  ```
-  sudo apt-get install ffmpeg
-  ```
-  Attempting to run the app without having ffmpeg installed will result in an informative message with installation instructions.
-
-## UI Version
-
-To run the UI version of Spotube:
-
-```
-python3 spotube_ui.py
-```
-
-When first starting the app, the user might be asked to perform a first time installation. For more information see the [Installation](#installation) section.
+Spotube is a desktop app that downloads local `.mp3` copies of Spotify playlists, with cover art, artist and album information, and optionally lyrics. It is built on the [spotube](https://pypi.org/project/spotube/) package.
 
 ![Initial State](images/initial_ui.png)\
 _The initial state of the UI_
 
-### UI Guide
+## Download (Windows)
 
-To download a spotify playlist:
+Download `Spotube-<version>-windows.zip` from the [Releases](https://github.com/GiorgosNik/spotube-desktop/releases) page, extract it, and run `Spotube.exe`. ffmpeg is included and no API keys are needed.
 
-- Enter the link in the input field labeled `Playlist URL`.
-- Click `Folder` and using the menu, select the location where the songs will be stored. \
-  (This step is optional. If no folder is selected, the songs will be saved in a new folder named `Songs` in the current directory.)
-- Click `Download`.
+Songs are saved to `Music\Spotube` in your user folder unless you pick another folder.
 
-The UI will be updated to display the cover art of the current song, it`s title, the elapsed time and the estimated time until the download is complete.
-The progress bar will fill up accordingly.
+## How it works
+
+You paste the link to a public Spotify playlist. For each song, Spotube:
+
+- Reads the song details from Spotify's public playlist view: name, artists, album, release year and cover art.
+- Finds the best matching video on YouTube, preferring the one closest in length to the original.
+- Downloads it in the best available quality and converts it to `.mp3`.
+- Adds lyrics from Genius, if you provide a Genius token.
+- Writes the tags and cover art into the file, named `Artist - Title.mp3`.
+- Optionally evens out the volume across all songs.
+
+## Using the app
+
+1. Paste the playlist link into the `Playlist URL` field.
+2. Optionally click `Select Folder` to choose where songs are saved.
+3. Leave `Normalize Sound` ticked to even out volume levels, or untick it to skip that step.
+4. Click `Download`.
+
+The app shows the cover art and title of the current song, the elapsed time and the estimated time left. Click `Stop` to cancel; songs that already finished are kept.
 
 ![Downloading](images/progress.gif)\
 _Dynamic UI updates_
 
-## CLI Version
+### Playlists over 100 tracks
 
-To run the CLI version of Spotube:
+Without Spotify API keys, Spotify's public view only lists the first 100 tracks. To download longer playlists:
+
+1. Click `Sign in to Spotify (100+ tracks)` once. A browser window opens; sign in and allow Exportify read access.
+2. Make sure the playlist is in your Spotify library (created or followed by you).
+
+The sign-in is remembered, so later downloads work in the background. It uses Microsoft Edge or Google Chrome.
+
+### Optional API keys
+
+Copy `.vars.example` to `.vars` (next to `Spotube.exe`, or in the project folder when running from source) and fill in what you have:
+
+| Key | Effect |
+|---|---|
+| `GENIUS_TOKEN` | Adds lyrics. Free from the [Genius API](https://docs.genius.com/) |
+| `SPOTIFY_ID`, `SPOTIFY_SECRET` | Reads playlists through the official Spotify API. Spotify requires the app owner to have Premium; without it, Spotube falls back to the public view automatically |
+
+The standard names `GENIUS_ACCESS_TOKEN`, `SPOTIPY_CLIENT_ID` and `SPOTIPY_CLIENT_SECRET` work too, as environment variables.
+
+## Running from source
+
+Requires Python 3.12 or newer and ffmpeg on your PATH (`winget install ffmpeg`, `brew install ffmpeg` or `sudo apt install ffmpeg`).
 
 ```
-python3 spotube_cli.py [URL] (Optional)[DIRECTORY]
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python spotube_ui.py
 ```
 
-Where:
+To check that everything is installed correctly without opening the window, run `python spotube_ui.py --self-test`.
 
-- {URL}: The address of the Spotify playlist to download.
-- {DIRECTORY}: The directory to store the songs. If empty, `./Songs` will be used by default.
+For a command-line downloader, use the package directly: `pip install spotube[exportify]`, then `spotube download <playlist link>`.
 
-Similarly to the UI version, the app will check if ffmpeg is installed. For more information see the [Installation](#installation) section.
-Next, the system will validate the given arguments. If they are invalid, eg. the link is wrong, or the user does not have access to the specified directory, the app will exit.
+## Development
 
-If all arguments are validated, the download will start.
-Two progress bars will appear:
+```
+pip install -r requirements-dev.txt
+pre-commit install
+pytest
+```
 
-- The first bar tracks the overall progress of downloading the playlist.
-- The second progress tracks of downloading the specific song, displaying it`s name and the current operation being performed.
+`pre-commit install` adds a git hook that runs ruff and blocks commits containing secrets.
+
+Pushing a version tag (for example `v1.0.0`) builds the Windows app, checks it with `--self-test` and publishes it as a GitHub release.
 
 ## Disclaimer
 

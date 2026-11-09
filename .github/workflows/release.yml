@@ -1,0 +1,71 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FFMPEG_BASE_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/latest
+  FFMPEG_BUILD: ffmpeg-master-latest-win64-gpl
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Download ffmpeg and verify its checksum
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "$env:FFMPEG_BASE_URL/$env:FFMPEG_BUILD.zip" -OutFile ffmpeg-build.zip
+          Invoke-WebRequest "$env:FFMPEG_BASE_URL/checksums.sha256" -OutFile checksums.sha256
+          $line = Select-String -Path checksums.sha256 -Pattern " $env:FFMPEG_BUILD.zip$" | Select-Object -First 1
+          if (-not $line) { throw "No checksum listed for $env:FFMPEG_BUILD.zip" }
+          $expected = $line.Line.Split(" ")[0]
+          $actual = (Get-FileHash ffmpeg-build.zip -Algorithm SHA256).Hash.ToLower()
+          if ($expected -ne $actual) { throw "ffmpeg checksum mismatch: expected $expected, got $actual" }
+          Expand-Archive ffmpeg-build.zip -DestinationPath ffmpeg-build
+          New-Item -ItemType Directory ffmpeg | Out-Null
+          Copy-Item "ffmpeg-build/$env:FFMPEG_BUILD/bin/ffmpeg.exe", "ffmpeg-build/$env:FFMPEG_BUILD/bin/ffprobe.exe" ffmpeg/
+
+      - name: Build
+        run: >
+          pyinstaller --noconfirm --windowed --name Spotube
+          --add-data "images:images" --add-data "ffmpeg:ffmpeg"
+          --collect-data customtkinter --collect-data CTkMessagebox
+          spotube_ui.py
+
+      - name: Self-test the built app
+        shell: pwsh
+        run: |
+          $process = Start-Process dist/Spotube/Spotube.exe -ArgumentList "--self-test" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Self-test failed with exit code $($process.ExitCode)" }
+
+      - name: Package
+        id: package
+        shell: pwsh
+        run: |
+          $name = "Spotube-$env:GITHUB_REF_NAME-windows.zip"
+          Compress-Archive -Path dist/Spotube -DestinationPath $name
+          "name=$name" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: spotube-windows
+          path: ${{ steps.package.outputs.name }}
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "${{ steps.package.outputs.name }}" --title "Spotube ${{ github.ref_name }}" --generate-notes
